@@ -23,7 +23,7 @@ var app = {vars:{
 	"release":"201312.a",  //increment this with each change. should solve caching issues. format: YYYYMMDDHHMMSS
 	"_clientid":"zmvc",
 	"baseURL":"", //used in non-local mode.
-	"testURL":"http://www.onlineformals.com/" //used ONLY if protocol is file: (for testing)
+	"testURL":"http://www.sporks.zoovy.com/" //used ONLY if protocol is file: (for testing)
 	},u:{},rq:[]};
 
 //set base url so images, css, js, etc all load from appropriate location once deployed.
@@ -1077,6 +1077,22 @@ So the cart template should contain these two elements and the extension should 
 
 
 
+<div id='cartQuickAddTemplate'>
+	<h4>Item added to cart</h4>
+	<div class='clearfix marginBottom'>
+		<div class='floatLeft marginRight'><img src='blank.gif' class='prodThumb' alt='' data-bind='var: product(zoovy:prod_thumb); defaultVar: product(zoovy:prod_image1); format:imageURL;' width='45' height='45' /></div>
+		
+		<div class='floatLeft' data-bind="var: product(zoovy:prod_name); format:text;"></div>
+	
+		<button class='continueShoppingButton'>Continue Shopping</button>
+		<button class='ui-state-highlight checkoutButton'>Checkout Now</button>
+	
+	</div>
+</div>
+
+
+
+
 <!-- cart line-item template -->
 <ul>
 	<li id='productListTemplateCart' class='padMargBorderBottom clearfix'>
@@ -1505,6 +1521,7 @@ The 'data-action' attribute is used to assign an onclick.
 	</li>
 	<li>Some JS test links
 	<ul>
+		<li><a href='#' onClick='app.ext.cart_quickadd.a.showQuickCart();'>showQuickCart</a></li>
 		<li><a href='#' onClick="localStorage.clear();">Clear Local Storage</a></li>
 		<li><a href='#' onClick="app.ext.orderCreate.a.startCheckout($('#mainContentArea'));">mobile checkout</a></li>
 		<li><a href='#' onClick="app.u.throwGMessage('All your base are belong to us','mainContentArea');">throwGmessage</a></li>
