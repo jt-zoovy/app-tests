@@ -16,31 +16,35 @@
 
 ************************************************************** */
 
+
+
 /*
-Here is a sample template to use:
+Description: 
+An alternative action for cart display after adding an item to the cart. 
+Instead of the full-blown cart modal, this will animate a small element in from the right and display either the item added (if successful) or the error message.
+Also will auto-retract after five seconds and includes a shop more button (which also retracts the element) and a checkout button.
 
-<div id='cartQuickAddTemplate' class='stdMargin'>
-	<h4>Item added to cart</h4>
-	<div class='clearfix marginBottom'>
-		<div class='floatLeft marginRight'><img src='blank.gif' class='prodThumb' alt='' data-bind='var: product(zoovy:prod_thumb); defaultVar: product(zoovy:prod_image1); format:imageURL;' width='45' height='45' /></div>
-		<div class='floatLeft' data-bind="var: product(zoovy:prod_name); format:text;"></div>
-	</div>
-
-	<button class='continueShoppingButton' data-app-event="cart_quickadd|execQuickaddCartHide">Shop More</button>
-	<button class='ui-state-highlight checkoutButton' data-app-event="cart_quickadd|execCheckoutShow">Checkout Now</button>
-
-</div>
+Dependencies:  
+store_product (for add to cart validation).
 
 To implement, change the action on the productTemplate Add to cart to this:
-
 onSubmit="app.ext.cart_quickadd.a.addItemToCart($(this)); return false;"
+
+OR, if app events are supported in the product layout (they are not at this time, but it's anticipated):
+<form data-app-event="cart_quickadd|execQuickaddCartAppend"...
+
 */
 
 
 var cart_quickadd = function() {
-	var theseTemplates = new Array('cartQuickAddTemplate');
+	
+	var theseTemplates = new Array('cartQuickaddTemplate');
 	var r = {
 
+	vars : {
+		willFetchMyOwnTemplates : true, //set to false if you move the template to your view. more efficient that way.
+		templates : theseTemplates
+		},
 
 ////////////////////////////////////   CALLBACKS    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -51,7 +55,9 @@ var cart_quickadd = function() {
 		init : {
 			onSuccess : function()	{
 				var r = false; //return false if extension won't load for some reason (account config, dependencies, etc).
-
+				if(app.ext.cart_quickadd.vars.willFetchMyOwnTemplates)	{
+					app.model.fetchNLoadTemplates(app.vars.baseURL+'extensions/cart_quickadd/templates.html',theseTemplates);
+					}
 				//if there is any functionality required for this extension to load, put it here. such as a check for async google, the FB object, etc. return false if dependencies are not present. don't check for other extensions.
 				r = true;
 
@@ -82,7 +88,7 @@ var cart_quickadd = function() {
 						$QC.anymessage({'message':rd});
 						}
 					else	{
-						$QC.anycontent({'templateID':'cartQuickAddTemplate',data:app.data['appProductGet|'+$("input[name='sku']",$form).val()]});
+						$QC.anycontent({'templateID':'cartQuickaddTemplate',data:app.data['appProductGet|'+$("input[name='sku']",$form).val()]});
 						app.u.handleAppEvents($QC);
 						}
 //close panel whether a success or error is shown.
@@ -145,6 +151,12 @@ var cart_quickadd = function() {
 					app.ext.cart_quickadd.u.hideQuickaddCart();
 					});
 				}, //execQuickaddCartHide
+			execQuickaddCartAppend : function($form)	{
+				$form.off('submit.execQuickaddCartAppend').on('submit.execQuickaddCartAppend',function(event){
+					event.preventDefault();
+					app.ext.cart_quickadd.a.addItemToCart($form);
+					});
+				},
 			execCheckoutShow : function($btn)	{
 				$btn.button();
 				$btn.off('click.execCheckout').on('click.execCheckout',function(event){

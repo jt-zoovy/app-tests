@@ -258,7 +258,7 @@ remember to NOT put the button inside the 'onclick' container or two events will
 <!-- 	<span data-bind='var: reviews(reviews.total); format:text; pretext: from ;posttext: reviews; className:numReviews;'></span> -->
 	</div>
 	
-	<form data-bind='var: product(pid); format:atcForm; extension:store_product;' class='prodViewerAddToCartForm clearfix' action='#'>
+	<form data-bind='var: product(pid); format:atcForm; extension:store_product;' class='prodViewerAddToCartForm clearfix' action='#' onSubmit="app.ext.myRIA.u.addItemToCart($(this),{'action':'modal'}); return false;">
 		<input type='hidden' name='qty' value='1' />
 		<button data-bind='format:addToCartButton; extension:myRIA; useParentData:true;'>more details</button>
 	</form>
@@ -1076,19 +1076,17 @@ So the cart template should contain these two elements and the extension should 
 
 
 
-
-<div id='cartQuickAddTemplate' class='stdMargin'>
+<div id='cartQuickaddTemplate' class='stdMargin'>
 	<h4>Item added to cart</h4>
 	<div class='clearfix marginBottom'>
 		<div class='floatLeft marginRight'><img src='blank.gif' class='prodThumb' alt='' data-bind='var: product(zoovy:prod_thumb); defaultVar: product(zoovy:prod_image1); format:imageURL;' width='45' height='45' /></div>
 		<div class='floatLeft' data-bind="var: product(zoovy:prod_name); format:text;"></div>
 	</div>
 
-	<button class='continueShoppingButton' data-app-event="cart_quickadd|execQuickCartHide">Shop More</button>
+	<button class='continueShoppingButton' data-app-event="cart_quickadd|execQuickaddCartHide">Shop More</button>
 	<button class='ui-state-highlight checkoutButton' data-app-event="cart_quickadd|execCheckoutShow">Checkout Now</button>
 
 </div>
-
 
 
 
