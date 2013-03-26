@@ -87,7 +87,7 @@ var infinite_prodlist = function() {
 				if(app.u.isSet(data.value))	{
 					data.bindData.csv = data.value;
 					$tag.data('bindData',data.bindData);
-					app.ext.infinite_prodlist.u.buildProductList($tag);
+					app.ext.infinite_prodlist.u.buildInfiniteProductList($tag);
 					}
 				}//prodlist		
 
@@ -112,8 +112,8 @@ var infinite_prodlist = function() {
 This is the function that gets executed to build a product list.
 It is run once, executed by the renderFormat.
 */
-			buildProductList : function($tag)	{
-//				app.u.dump("BEGIN store_prodlist.u.buildProductList()");
+			buildInfiniteProductList : function($tag)	{
+//				app.u.dump("BEGIN store_prodlist.u.buildInfiniteProductList()");
 //				app.u.dump(" -> obj: "); app.u.dump(obj);
 
 				var bindData = $tag.data('bindData');
@@ -128,11 +128,11 @@ It is run once, executed by the renderFormat.
 					this.addProductToPage($tag);
 					}
 				else	{
-					app.u.throwGMessage("WARNING: store_prodlist.u.buildProductList is missing some required fields. bindData follows: ");
+					app.u.throwGMessage("WARNING: store_prodlist.u.buildInfiniteProductList is missing some required fields. bindData follows: ");
 					app.u.dump(bindData);
 					}
 //				app.u.dump(" -> r = "+r);
-				}, //buildProductList
+				}, //buildInfiniteProductList
 
 			addProductToPage : function($tag)	{
 				app.u.dump("BEGIN infinite_prodlist.u.addProductToPage");
