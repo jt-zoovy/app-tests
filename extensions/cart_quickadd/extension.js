@@ -94,14 +94,14 @@ var cart_quickadd = function() {
 //close panel whether a success or error is shown.
 					setTimeout(function(){
 						if($QC.is(':visible'))	{
-							app.ext.cart_quickadd.u.hideQuickaddCart();
+							app.ext.cart_quickadd.u.cartHide();
 							}
 						else	{} //already minimized, do nothing.
 						},5000);
 					}
 				//the handle add to cart will take care of variations validation and error display.
 				if(app.ext.store_product.u.handleAddToCart($form,{'callback':quickAddCallback}))	{
-					app.ext.cart_quickadd.u.showQuickaddCart(); //opens the cart and goes into a 'loading' state.
+					app.ext.cart_quickadd.u.cartShow(); //opens the cart and goes into a 'loading' state.
 					}
 				else {} //no default 'fail' action. the function above handles it.
 				} //addItemToCart
@@ -110,8 +110,8 @@ var cart_quickadd = function() {
 ////////////////////////////////////   UTIL [u]   \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 		u : {
 
-			showQuickaddCart : function()	{
-				app.u.dump("BEGIN cart_quickadd.u.showQuickaddCart");
+			cartShow : function()	{
+				app.u.dump("BEGIN cart_quickadd.u.cartShow");
 				var $QC = $("#quickaddCart");
 				if($QC.length)	{$QC.empty()}
 				else	{
@@ -127,15 +127,15 @@ var cart_quickadd = function() {
 					}
 				$QC.showLoading({'message':'Adding Item To Cart'});
 				
-				}, //showQuickaddCart
+				}, //cartShow
 				
-			hideQuickaddCart : function()	{
+			cartHide : function()	{
 				var $QC = $("#quickaddCart");
 				if($QC.is(':animated'))	{} //already animating. do nothing.
 				else	{
 					$QC.animate({right: -250}, 'slow',function(){$QC.hide()});
 					}
-				} //hideQuickaddCart
+				} //cartHide
 			}, //u [utilities]
 
 //app-events are added to an element through data-app-event="extensionName|functionName"
@@ -148,15 +148,17 @@ var cart_quickadd = function() {
 				$btn.button();
 				$btn.off('click.execQuickaddCartHide').on('click.execQuickaddCartHide',function(event){
 					event.preventDefault();
-					app.ext.cart_quickadd.u.hideQuickaddCart();
+					app.ext.cart_quickadd.u.cartHide();
 					});
 				}, //execQuickaddCartHide
+
 			execQuickaddCartAppend : function($form)	{
 				$form.off('submit.execQuickaddCartAppend').on('submit.execQuickaddCartAppend',function(event){
 					event.preventDefault();
 					app.ext.cart_quickadd.a.addItemToCart($form);
 					});
-				},
+				}, //execQuickaddCartAppend
+
 			execCheckoutShow : function($btn)	{
 				$btn.button();
 				$btn.off('click.execCheckout').on('click.execCheckout',function(event){
@@ -164,6 +166,7 @@ var cart_quickadd = function() {
 					showContent('checkout',{'show':'checkout'});
 					});
 				} //execCheckoutShow
+
 			} //e [app Events]
 		} //r object.
 	return r;
