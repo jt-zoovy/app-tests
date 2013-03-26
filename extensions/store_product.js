@@ -710,15 +710,17 @@ NOTES
 				return obj;
 				}, //buildCartItemAppendObj
 
-//a no frills add to cart.
-			handleAddToCart : function($form)	{
+//a no frills add to cart. returns false unless a dispatch occurs, then true.
+			handleAddToCart : function($form,_tag)	{
+				var r = false; //what is returned. True if a dispatch occurs.
 				app.u.dump("BEGIN store_product.u.handleAddToCart");
 				if($form && $form.length && $form.is('form'))	{
 					var cartObj = app.ext.store_product.u.buildCartItemAppendObj($form);
 					if(cartObj)	{
 						app.u.dump(" -> have a valid cart object"); app.u.dump(cartObj);
 						if(cartObj)	{
-							app.calls.cartItemAppend.init(cartObj,{},'immutable');
+							r = true;
+							app.calls.cartItemAppend.init(cartObj,_tag || {},'immutable');
 							app.model.dispatchThis('immutable');
 							}
 						}
@@ -729,6 +731,7 @@ NOTES
 				else	{
 					$('#globalMessaging').anymessage({'message':"In store_product.u.handleAddToCart, $form ["+typeof $form+"] not set, has no length ["+$form.length+"] or is not a form ["+$form.is('form')+"].",'gMessage':true});
 					}
+				return r;
 				}, //handleAddToCart
 
 //$FP should be a form's parent element. Can contain 1 or several forms.

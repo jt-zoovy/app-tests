@@ -455,7 +455,7 @@ this will likely become more flexible in the future. ###
 	<div data-bind='var: product(zoovy:ship_latency); format:text;pretext:Normally ships in ;posttext: day(s);' class='latency marginBottom'></div>
 
 
-	<form data-bind='var: product(pid); format:atcForm; extension:store_product;' class='prodViewerAddToCartForm clearfix' action='#' onSubmit="app.ext.myRIA.u.addItemToCart($(this)); return false;">
+	<form data-bind='var: product(pid); format:atcForm; extension:store_product;' class='prodViewerAddToCartForm clearfix' action='#' onSubmit="app.ext.cart_quickadd.a.addItemToCart($(this)); return false;">
 
 		<fieldset data-bind='var: product(pid); format:atcVariations; extension:store_product;' class='borderNone'></fieldset>
 		<fieldset data-bind='useParentData:true; format:atcQuantityInput; extension:store_product; pretext:Quantity: ; defaultValue:1;' class='borderNone'></fieldset>
@@ -1077,17 +1077,16 @@ So the cart template should contain these two elements and the extension should 
 
 
 
-<div id='cartQuickAddTemplate'>
+<div id='cartQuickAddTemplate' class='stdMargin'>
 	<h4>Item added to cart</h4>
 	<div class='clearfix marginBottom'>
 		<div class='floatLeft marginRight'><img src='blank.gif' class='prodThumb' alt='' data-bind='var: product(zoovy:prod_thumb); defaultVar: product(zoovy:prod_image1); format:imageURL;' width='45' height='45' /></div>
-		
 		<div class='floatLeft' data-bind="var: product(zoovy:prod_name); format:text;"></div>
-	
-		<button class='continueShoppingButton'>Continue Shopping</button>
-		<button class='ui-state-highlight checkoutButton'>Checkout Now</button>
-	
 	</div>
+
+	<button class='continueShoppingButton' data-app-event="cart_quickadd|execQuickCartHide">Shop More</button>
+	<button class='ui-state-highlight checkoutButton' data-app-event="cart_quickadd|execCheckoutShow">Checkout Now</button>
+
 </div>
 
 
