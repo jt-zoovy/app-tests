@@ -163,8 +163,13 @@ It is run once, executed by the renderFormat.
 						}
 					else	{
 						for(var i = 0; i < L; i += 1)	{
+var tmp = app.data['appProductGet|'+pageCSV[i]];
+if(typeof app.data['appReviewsList|'+pageCSV[i]] == 'object'  && app.data['appReviewsList|'+pageCSV[i]]['@reviews'].length)	{
+	tmp['reviews'] = app.ext.store_prodlist.u.summarizeReviews(pageCSV[i]); //generates a summary object (total, average)
+	tmp['reviews']['@reviews'] = app.data['appReviewsList|'+pageCSV[i]]['@reviews']
+	}
 							//if you want this list inventory aware, do you check here and skip the append below.
-							$tag.append(app.renderFunctions.transmogrify({'pid':pageCSV[i]},plObj.loadsTemplate,app.data['appProductGet|'+pageCSV[i]]));
+$tag.append(app.renderFunctions.transmogrify({'pid':pageCSV[i]},plObj.loadsTemplate,tmp));
 							}
 						app.ext.infinite_prodlist.u.handleScroll($tag);
 						}				
