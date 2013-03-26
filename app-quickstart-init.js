@@ -14,6 +14,7 @@ app.rq.push(['extension',0,'cco','extensions/cart_checkout_order.js']);
 
 
 app.rq.push(['extension',0,'store_prodlist','extensions/store_prodlist.js']);
+app.rq.push(['extension',0,'infinite_prodlist','extensions/infinite_prodlist.js']);
 app.rq.push(['extension',0,'store_navcats','extensions/store_navcats.js']);
 app.rq.push(['extension',0,'store_search','extensions/store_search.js']);
 app.rq.push(['extension',0,'store_product','extensions/store_product.js']);
