@@ -55,10 +55,10 @@ var cart_quickadd = function() {
 //actions are functions triggered by a user interaction, such as a click/tap.
 //these are going the way of the do do, in favor of app events. new extensions should have few (if any) actions.
 		a : {
-			
+			//add this as the action on your form
 			addItemToCart : function($form)	{
 				
-				this.showQuickCart();
+				this.showQuickCart(); //opens the cart and goes into a 'loading' state.
 				
 				app.ext.store_product.u.handleAddToCart($form,{'callback':function(rd){
 					var $QC = $("#quickCart")
