@@ -2208,8 +2208,8 @@ effects the display of the nav buttons only. should be run just after the handle
 					app.ext.myRIA.u.revertPageFromPreviewMode($('#mainContentArea_search'));
 					}
 				else	{
-					$('#mainContentArea').anycontent({'templateID':infoObj.templateID,'showLoading':false,'dataAttribs':{'id':'mainContentArea_search'}});
-					$page = $('#mainContentArea_search');
+					$('#mainContentArea').anycontent({'templateID':infoObj.templateID,'showLoading':false,'dataAttribs':{'id':infoObj.parentID}});
+					$page = $('#'+infoObj.parentID);
 					}
 
 //add item to recently viewed list IF it is not already in the list.
