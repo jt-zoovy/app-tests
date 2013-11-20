@@ -165,19 +165,23 @@ obj['softauth'] = "order"; // [OPTIONAL]. if user is logged in, this gets ignore
 
 			onSuccess : function(tagObj)	{
 				var $parent = $('#'+tagObj.parentID);
-				$parent.removeClass('loadingBG');
-				var L = app.data[tagObj.datapointer]['@topics'].length;
-				app.u.dump(" -> L = "+L);
-				var topicID;
-				if(L > 0)	{
-					for(var i = 0; i < L; i += 1)	{
-						topicID = app.data[tagObj.datapointer]['@topics'][i]['TOPIC_ID']
-						app.u.dump(" -> TOPIC ID = "+topicID);
-						$parent.append(app.renderFunctions.transmogrify({'id':topicID,'data-topicid':topicID},tagObj.templateID,app.data[tagObj.datapointer]['@topics'][i]))
+// ** 201336 This prevents FAQ's from being re-appended in the event the user revisits the FAQ page
+				if(!$parent.data('faqs-rendered')){
+					$parent.removeClass('loadingBG');
+					var L = app.data[tagObj.datapointer]['@topics'].length;
+					app.u.dump(" -> L = "+L);
+					var topicID;
+					if(L > 0)	{
+						for(var i = 0; i < L; i += 1)	{
+							topicID = app.data[tagObj.datapointer]['@topics'][i]['TOPIC_ID']
+							app.u.dump(" -> TOPIC ID = "+topicID);
+							$parent.append(app.renderFunctions.transmogrify({'id':topicID,'data-topicid':topicID},tagObj.templateID,app.data[tagObj.datapointer]['@topics'][i]))
+							}
 						}
-					}
-				else	{
-					$parent.append("There are no FAQ at this time.");
+					else	{
+						$parent.append("There are no FAQ at this time.");
+						}
+					$parent.data('faqs-rendered', true);
 					}
 				
 				}
@@ -264,7 +268,7 @@ obj['softauth'] = "order"; // [OPTIONAL]. if user is logged in, this gets ignore
 //				app.u.dump(data);
 				var o = "";
 				for(var index in data.value)	{
-					o += "<div><label title='"+data.value[index].EXEC_SUMMARY+"'>";
+					o += "<div class='subscribeListItem'><label title='"+data.value[index].EXEC_SUMMARY+"'>";
 					o += "<input type='checkbox' checked='checked' name='newsletter-"+data.value[index].ID+"' \/>";
 					o += data.value[index].NAME+"<\/label><\/div>";
 					}
@@ -318,7 +322,7 @@ if the P.pid and data-pid do not match, empty the modal before openeing/populati
 //this is a new product being displayed in the viewer.
 						$parent.empty();
 						}
-					$parent.dialog({modal: true,width:500,height:500,autoOpen:false,"title":"Write a review for "+P.pid});
+					$parent.dialog({modal: true,width: ($(window).width() > 500) ? 500 : '90%',height:500,autoOpen:false,"title":"Write a review for "+P.pid});
 //the only data needed in the reviews form is the pid.
 //the entire product record isn't passed in because it may not be available (such as in invoice or order history, or a third party site).
 					$parent.dialog('open').append(app.renderFunctions.transmogrify({id:'review-modal_'+P.pid},P.templateID,{'pid':P.pid}));
@@ -328,13 +332,19 @@ if the P.pid and data-pid do not match, empty the modal before openeing/populati
 
 
 			handleReviews : function(formID)	{
-				frmObj = $('#'+formID).serializeJSON();
-				$('#'+formID+' .zMessage').empty().remove(); //clear any existing error messages.
+				var
+					$form = $('#'+formID),
+					frmObj = $form.serializeJSON();
+
+				$('.zMessage',$form).empty().remove(); //clear any existing error messages.
 				var isValid = app.ext.store_crm.validate.addReview(frmObj); //returns true or some errors.
 				if(isValid === true)	{
-					app.ext.calls.appReviewAdd.init(frmObj,{"callback":"showMessaging","parentID":formID,"message":"Thank you for your review. Pending approval, it will be added to the store."});
-					app.model.dispatchThis();
-					$('reviewFrm').hide(); //hide existing form to avoid confusion.
+					app.calls.appReviewAdd.init(frmObj,{
+						"callback":"showMessaging",
+						"jqObj":$form,
+						"jqObjEmpty" : true,
+						"message":"Thank you for your review. Pending approval, it will be added to the store."},'immutable');
+					app.model.dispatchThis('immutable');
 					}
 				else	{
 					//report errors.
@@ -418,18 +428,17 @@ This is used to get add an array of skus, most likely for a product list.
 				return csvArray;
 				}, //getSkusFromList
 
-			handleChangePassword : function(formID,tagObj)	{
+			handleChangePassword : function($form,tagObj)	{
 				
-$('#'+formID+' .ui-widget-anymessage').empty().remove(); //clear any existing messaging
-var formObj = $('#'+formID).serializeJSON();
+$('.messaging', $form).empty(); //clear any existing messaging
+var formObj = $form.serializeJSON();
 if(app.ext.store_crm.validate.changePassword(formObj)){
 	app.calls.buyerPasswordUpdate.init(formObj.password,tagObj);
 	app.model.dispatchThis('immutable');
 	}
 else{
 	var errObj = app.u.youErrObject("The two passwords do not match.",'42');
-	errObj.parentID = formID
-	app.u.throwMessage(errObj);
+	$(".messaging",$form).anymessage(errObj);
 	}
 				
 				}, //handleChangePassword
@@ -457,22 +466,25 @@ else{
 					$('#globalMessaging').anymessage({'message':'In store_crm.u.handleSubscribe, $form not passed.','gMessage':true});
 					}
 				},
-			
+
 //vars needs addressID AND addressType (bill or ship)
 			showAddressEditModal : function(vars,onSuccessCallback)	{
 				var r = false; //what is returned. true if editor is displayed, false if an error occured.
 
 				if(typeof vars === 'object' && vars.addressID && vars.addressType)	{
 					var addressData = app.ext.cco.u.getAddrObjByID(vars.addressType,vars.addressID);
+					app.u.dump(addressData);
 					if(addressData)	{
 						r = true;
 						var $editor = $("<div \/>");
 						$editor.anycontent({'templateID':(vars.addressType == 'ship') ? 'chkoutAddressShipTemplate' : 'chkoutAddressBillTemplate','data':addressData});
 						$editor.append("<input type='hidden' name='shortcut' value='"+vars.addressID+"' \/>");
 						$editor.append("<input type='hidden' name='type' value='"+vars.addressType+"' \/>");
+						if(vars.addressType == 'bill')	{
+							$editor.append("<label><span>email:<\/span><input type='email' name='bill/email' data-bind='var: address(bill/email); format:popVal;' value='"+( addressData['bill/email'] || "" )+"' required='required' \/><\/label>");
+							}
 						$editor.wrapInner('<form \/>'); //needs this for serializeJSON later.
 						
-					
 						$editor.dialog({
 							width: ($(window).width() < 500) ? ($(window).width() - 50) : 500, //check window width/height to accomodate mobile devices.
 							height: ($(window).height() < 500) ? ($(window).height() - 50) : 500,
@@ -516,6 +528,11 @@ else{
 								},
 							close : function(event, ui) {$(this).dialog('destroy').remove()}
 							});
+//* 201342 -> used in checkout (or potentailly any editor) to immediately highlight any invalid fields (useful in 'edit' as opposed to 'create' address)
+							if(vars.validateForm)	{
+								app.u.validateForm($editor);
+								}
+
 						
 						}
 					else	{
@@ -536,17 +553,39 @@ else{
 
 					r = true;
 					var $editor = $("<div \/>");
-					$editor.append("<input type='text' maxlength='6' data-minlength='6' name='shortcut' placeholder='address id (6 characters)' \/>");
+					
 					$editor.append("<input type='hidden' name='type' value='"+vars.addressType.toUpperCase()+"' \/>");
 					$editor.anycontent({'templateID':(vars.addressType == 'ship') ? 'chkoutAddressShipTemplate' : 'chkoutAddressBillTemplate','data':{},'showLoading':false});
+//* 201338 -> the address id should be at the bottom of the form, not the top. isn't that important or required.
+					$editor.append("<input type='text' maxlength='6' data-minlength='6' name='shortcut' placeholder='address id (6 characters)' \/>");
 					$editor.wrapInner('<form \/>'); //needs this for serializeJSON later.
-					
+
+//** 201338 -> if the placeholder attribute on an input is not supported (thx IE8), then add labels.
+					if(app.ext.orderCreate)	{
+						app.ext.orderCreate.u.handlePlaceholder($editor);
+						}
+					$(":input",$editor).each(function(index){
+						var $input = $(this);
+						if($input.attr('placeholder') && !$input.attr('title'))	{
+							$(this).attr('title',$input.attr('placeholder'))
+							}
+						$input.tooltip({
+							position: {
+								my: "left top",
+								at: "right top",
+								using: function( position, feedback ) {
+									$( this ).css( position );
+									}
+								}
+							});
+
+						});
 				
 					$editor.dialog({
 						width: ($(window).width() < 500) ? ($(window).width() - 50) : 500, //check window width/height to accomodate mobile devices.
 						height: ($(window).height() < 500) ? ($(window).height() - 50) : 500,
 						modal: true,
-						title: 'edit address',
+						title: 'Add a new '+vars.addressType+' address',
 						buttons : {
 							'cancel' : function(event){
 								event.preventDefault();
@@ -610,10 +649,8 @@ else{
 						$('#globalMessaging').anymessage({'message':'In store_crm.e.showWriteReview, unable to determine pid/stid','gMessage':true});
 						}
 					})
-				},
+				}
 
-
-			
 			} //e/events
 		
 		} //r object.

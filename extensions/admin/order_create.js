@@ -79,7 +79,7 @@ doesn't have to be reloaded. The following code nukes all that so that from one 
 */
 var obj = app.ext.convertSessionToOrder.vars; //shortcut
 
-for(index in obj)	{
+for(var index in obj)	{
 	if(index.substring(0,8) == 'payment/')	{
 		delete obj[index];
 		}
@@ -1175,7 +1175,7 @@ after using it, too frequently the dispatch would get cancelled/dominated by ano
 				$buttonBar.append($("<button \/>").text("Find Customer").button().click(function(){
 					$buttonBar.hide();
 					$target.showLoading();
-					app.ext.admin.calls.adminCustomerSearch.init($('#customerLookupByEmail').val(),{'callback':'useLookupForCustomerGet','extension':'convertSessionToOrder'});
+					app.ext.admin.calls.adminCustomerSearch.init({'scope':'EMAIL','searchfor':$('#customerLookupByEmail').val()},{'callback':'useLookupForCustomerGet','extension':'convertSessionToOrder'});
 					app.model.dispatchThis();
 					}));
 				$buttonBar.appendTo($target);
@@ -1186,7 +1186,8 @@ after using it, too frequently the dispatch would get cancelled/dominated by ano
 //				app.u.dump(" -> P: "); app.u.dump(P);
 				$('#printContainer').empty();
 				$('body').showLoading(); //indicate to client that button was pressed.
-				var profileDatapointer = undefined;
+				var profileDatapointer = "";
+				
 				if(P.data.profile)	{
 					app.calls.appProfileInfo.init({'profile':P.data.profile},{},'immutable');
 					profileDatapointer = 'appProfileInfo|'+P.data.profile;
@@ -1195,17 +1196,17 @@ after using it, too frequently the dispatch would get cancelled/dominated by ano
 					app.calls.appProfileInfo.init({'domain':P.data.domain},{},'immutable');
 					profileDatapointer = 'appProfileInfo|'+P.data.domain;
 					}
-				else	{
-					//error handling for this is below.
-					}
-				
-				if(profileDatapointer)	{
-					app.ext.convertSessionToOrder.calls.adminOrderDetail.init(orderID,{'callback':'printById','merge':profileDatapointer,'extension':'convertSessionToOrder','templateID':P.data.type.toLowerCase()+'Template'});
-					app.model.dispatchThis('immutable');
+				else if(orderID && app.data['adminOrderDetail|'+orderID] && app.data['adminOrderDetail|'+orderID].our && app.data['adminOrderDetail|'+orderID].our.domain)	{
+					app.calls.appProfileInfo.init({'domain':app.data['adminOrderDetail|'+orderID].our.domain},{},'immutable');
+					profileDatapointer = 'appProfileInfo|'+app.data['adminOrderDetail|'+orderID].our.domain;
 					}
 				else	{
-					app.u.throwGMessage("In order_create.a.printOrder, either profile ["+P.data.profile+"] or domain ["+P.data.domain+"] is required.");
+					$('#globalMessaging').anymessage({'message':'Both domain AND profile were not set on this order. That is unusual. Order will be printed with no branding.'})
 					}
+				//according to B, profile OR domain will always be set and if not, it's an edge case and should be printed w/ no branding.
+				app.ext.convertSessionToOrder.calls.adminOrderDetail.init(orderID,{'callback':'printById','merge':profileDatapointer,'extension':'convertSessionToOrder','templateID':P.data.type.toLowerCase()+'Template'});
+				app.model.dispatchThis('immutable');
+
 				}
 
 
@@ -1316,7 +1317,6 @@ the dom update for the lineitem needs to happen last so that the cart changes ar
 					app.u.dump(" -> a stid ["+stid+"] and a quantity ["+qty+"] are required to do an update cart.");
 					}
 				},
-
 
 
 //generate the list of existing addresses (for users that are logged in )

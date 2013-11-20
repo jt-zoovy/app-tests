@@ -29,7 +29,6 @@ var store_product = function() {
 
 
 
-
 					////////////////////////////////////   CALLS    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\		
 
 
@@ -46,7 +45,7 @@ var store_product = function() {
 //if no object is passed in, one must be created so that adding datapointer to a non existent object doesn't cause a js error
 // Override datapointer, if set.
 // The advantage of saving the data in memory and local storage is lost if the datapointer isn't consistent, especially for product data.
-				pid = pid.toUpperCase();
+				pid = pid.toString().toUpperCase(); //if a pid is all numbers, pid.toUpperCase results in JS error.
 				tagObj = $.isEmptyObject(tagObj) ? {} : tagObj; 
 				tagObj["datapointer"] = "appProductGet|"+pid; 
 
@@ -95,7 +94,7 @@ var store_product = function() {
 				var r = 0; //will return a 1 or a 0 based on whether the item is in local storage or not, respectively.
 //app.u.dump("appReviewsList tagObj:");
 //app.u.dump(tagObj);
-				pid = pid.toUpperCase();
+				pid = pid.toString().toUpperCase();
 				tagObj = $.isEmptyObject(tagObj) ? {} : tagObj;
 				tagObj["datapointer"] = "appReviewsList|"+pid;
 
@@ -487,9 +486,9 @@ it has no inventory AND inventory matters to merchant
 					var L = variations.length;
 					for(var i = 0; i < L; i += 1)	{
 						r[variations[i].id] = {'prompt':variations[i].prompt};
-						var OL = variations[i].options.length;
+						var OL = variations[i]['@options'].length;
 						for(var oi = 0; oi < OL; oi += 1)	{
-							r[variations[i].id][variations[i].options[oi].v] = variations[i].options[oi].prompt;
+							r[variations[i].id][variations[i]['@options'][oi].v] = variations[i]['@options'][oi].prompt;
 							}
 						}
 					}
@@ -540,17 +539,20 @@ it has no inventory AND inventory matters to merchant
 //				app.u.dump("BEGIN store_product.u.getProductInventory ["+pid+"]");
 				var inv = false;
 //if variations are NOT present, inventory count is readily available.
-				if($.isEmptyObject(app.data['appProductGet|'+pid]['@variations']) && !$.isEmptyObject(app.data['appProductGet|'+pid]['@inventory']))	{
-					inv = Number(app.data['appProductGet|'+pid]['@inventory'][pid].inv);
-//					app.u.dump(" -> item has no variations. inv = "+inv);
-					}
-//if variations ARE present, inventory must be summed from each inventory-able variation.
-				else	{
-					for(var index in app.data['appProductGet|'+pid]['@inventory']) {
-						inv += Number(app.data['appProductGet|'+pid]['@inventory'][index].inv)
+				if(app.data['appProductGet|'+pid])	{
+					if((app.data['appProductGet|'+pid]['@variations'] && $.isEmptyObject(app.data['appProductGet|'+pid]['@variations'])) && !$.isEmptyObject(app.data['appProductGet|'+pid]['@inventory']))	{
+						inv = Number(app.data['appProductGet|'+pid]['@inventory'][pid].inv);
+	//					app.u.dump(" -> item has no variations. inv = "+inv);
 						}
-//					app.u.dump(" -> item HAS variations. inv = "+inv);
+	//if variations ARE present, inventory must be summed from each inventory-able variation.
+					else	{
+						for(var index in app.data['appProductGet|'+pid]['@inventory']) {
+							inv += Number(app.data['appProductGet|'+pid]['@inventory'][index].inv)
+							}
+	//					app.u.dump(" -> item HAS variations. inv = "+inv);
+						}
 					}
+				else	{} //cant get inventory without a product record.
 				return inv;
 				}, //getProductInventory
 
@@ -674,15 +676,17 @@ NOTES
 					sku = $("input[name='sku']",$form).val();
 
 					if(sku && $qtyInput.val() >= 1)	{
+						obj = $form.serializeJSON();
+						app.u.dump(" -> buildCartItemAppendObj into sku/qtyInput section");
+//here for the admin side of things. Will have no impact on retail as price can't be set.
+//should always occur, validating or not.
+						if(obj.price == "")	{delete obj.price; app.u.dump("Deleting price");}
+						else{}
+
 //There are use cases for skipping validation, such as admin, quick order, etc.
 						if($form.data('skipvalidation') || app.ext.store_product.validate.addToCart(sku,$form))	{
-							obj = $form.serializeJSON();
+							
 							obj['%variations'] = {};
-	//here for the admin side of things. Will have no impact on retail as price can't be set.
-							if(obj.price)	{
-								if(obj.price != ""){}
-								else{delete obj.price} //if no price is, do not pass blank or the item will be added with a zero price.
-								}
 	
 							for(var index in obj)	{
 	//							app.u.dump(" -> index: "+index);
@@ -696,15 +700,21 @@ NOTES
 
 							}
 						else	{
+// ** 201318 returning false will prevent the addItemToCart from dispatching calls
+							obj = false;
 							//the validation itself will display the errors.
 							}
 						}
 					else	{
+// ** 201318 returning false will prevent the addItemToCart from dispatching calls
+						obj = false;
 						$form.anymessage({'message':'The form for store_product.u.handleAddToCart was either missing a sku ['+sku+'] or qty input ['+$qtyInput.length+'].','gMessage':true});
 						}
 		
 					}
 				else	{
+// ** 201318 returning false will prevent the addItemToCart from dispatching calls
+					obj = false;
 					$('#globalMessaging').anymessage({'message':'In store_product.u.buildCartItemAppendObj, $form not passed.','gMessage':true});
 					}
 				return obj;
@@ -717,7 +727,7 @@ NOTES
 				if($form && $form.length && $form.is('form'))	{
 					var cartObj = app.ext.store_product.u.buildCartItemAppendObj($form);
 					if(cartObj)	{
-						app.u.dump(" -> have a valid cart object"); app.u.dump(cartObj);
+//						app.u.dump(" -> have a valid cart object"); app.u.dump(cartObj);
 						if(cartObj)	{
 							r = true;
 							app.calls.cartItemAppend.init(cartObj,_tag || {},'immutable');
@@ -733,6 +743,7 @@ NOTES
 					}
 				return r;
 				}, //handleAddToCart
+
 
 //$FP should be a form's parent element. Can contain 1 or several forms.
 			handleBulkAddToCart : function($FP,_tag)	{

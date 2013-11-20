@@ -21,7 +21,7 @@
 
 
 var zController = function(params) {
-	this.u.dump('zController has been instantiated');
+	this.u.dump('Welcome fellow developer!\nThis project was built with an open-source MVC which can be found here:\nhttps://github.com/zoovy/AnyCommerce-Development','greet');
 	if(typeof Prototype == 'object')	{
 		alert("Oh No! you appear to have the prototype ajax library installed. This library is not compatible. Please change to a non-prototype theme (2011 series).");
 		}
@@ -45,7 +45,7 @@ jQuery.extend(zController.prototype, {
 
 //		app = this;
 //		this.u.dump(P);
-		app = $.extend(true,P,this); //deep extend to make sure nexted functions are preserved. If duplicates, 'this' will override P.
+		app = $.extend(true,P,this); //deep extend to make sure nested functions are preserved. If duplicates, 'this' will override P.
 		app.model = zoovyModel(); // will return model as object. so references are app.model.dispatchThis et all.
 
 		app.vars = app.vars || {};
@@ -65,13 +65,16 @@ jQuery.extend(zController.prototype, {
 		app.vars.debug = app.u.getParameterByName('debug'); //set a var for this so the URI doesn't have to be checked each time.
 //in some cases, such as the zoovy UI, zglobals may not be defined. If that's the case, certain vars, such as jqurl, must be passed in via P in initialize:
 		if(typeof zGlobals == 'object')	{
+			app.u.dump(" -> zGlobals are an object")
 			app.vars.profile = zGlobals.appSettings.profile.toUpperCase();
 			app.vars.username = zGlobals.appSettings.username.toLowerCase();
 //need to make sure the secureURL ends in a / always. doesn't seem to always come in that way via zGlobals
 			app.vars.secureURL = zGlobals.appSettings.https_app_url;
-			app.vars.sdomain = zGlobals.appSettings.sdomain;
-			if('https:' == app.vars.protocol)	{app.vars.jqurl = zGlobals.appSettings.https_api_url;}
-			else	{app.vars.jqurl = zGlobals.appSettings.http_api_url}
+			app.vars.domain = zGlobals.appSettings.sdomain;
+// *** -> as of 201342, the path /jsonapi/ can/should be used for all ajax calls in a store
+			app.vars.jqurl = (document.location.protocol === 'file:') ? app.vars.testURL+'jsonapi/' : '/jsonapi/';
+//			if('https:' == app.vars.protocol)	{app.vars.jqurl = zGlobals.appSettings.https_api_url;}
+//			else	{app.vars.jqurl = zGlobals.appSettings.http_api_url}
 			}
 		
 // can be used to pass additional variables on all request and that get logged for certain requests (like createOrder). 
@@ -81,11 +84,9 @@ jQuery.extend(zController.prototype, {
 		app.vars.release = app.vars.release || 'unspecified'; //will get overridden if set in P. this is default.
 
 // += is used so that this is appended to anything passed in P.
-		app.vars.passInDispatchV += 'browser:'+app.u.getBrowserInfo()+";OS:"+app.u.getOSInfo()+';'; //passed in model as part of dispatch Version. can be app specific.
-		
+		app.vars.passInDispatchV += 'browser:'+app.u.getBrowserInfo()+";OS:"+app.u.getOSInfo()+';compatMode:'+document.compatMode; //passed in model as part of dispatch Version. can be app specific.
 		app.ext = app.ext || {}; //for holding extensions
 		app.data = {}; //used to hold all data retrieved from ajax requests.
-		
 /*
 app.templates holds a copy of each of the templates declared in an extension but defined in the view.
 copying the template into memory was done for two reasons:
@@ -176,35 +177,40 @@ copying the template into memory was done for two reasons:
 			app.model.addExtensions(app.vars.extensions);
 			}
 		else if(app.vars.cartID)	{
-			app.u.dump(" -> app.vars.cartID set. verify.");
-			app.calls.appCartExists.init(app.vars.cartID,{'callback':'handleTrySession','datapointer':'appCartExists'});
-			app.calls.whoAmI.init({'callback':'suppressErrors'},'immutable'); //get this info when convenient.
+//			app.u.dump(" -> app.vars.cartID set. verify.");
+			app.model.destroy('cartDetail'); //do not use a cart from localstorage
+			app.calls.cartDetail.init({'callback':'handleNewSession'},'immutable');
+			app.calls.whoAmI.init({},{'callback':'suppressErrors'},'immutable'); //get this info when convenient.
 			app.model.dispatchThis('immutable');
 			}
 //if cartID is set on URI, there's a good chance a redir just occured from non secure to secure.
 		else if(app.u.isSet(app.u.getParameterByName('cartID')))	{
-			app.u.dump(" -> cartID from URI used.");
-			app.calls.appCartExists.init(app.u.getParameterByName('cartID'),{'callback':'handleTrySession','datapointer':'appCartExists'});
-			app.calls.whoAmI.init({'callback':'suppressErrors'},'immutable'); //get this info when convenient.
+//			app.u.dump(" -> cartID from URI used.");
+			app.vars.cartID = app.u.getParameterByName('cartID');
+			app.model.destroy('cartDetail'); //do not use a cart from localstorage
+			app.calls.cartDetail.init({'callback':'handleNewSession'},'immutable');
+			app.calls.whoAmI.init({},{'callback':'suppressErrors'},'immutable'); //get this info when convenient.
 			app.model.dispatchThis('immutable');
 			}
 //check localStorage
 		else if(app.model.fetchCartID())	{
-			app.u.dump(" -> session retrieved from localstorage..");
-			app.calls.appCartExists.init(app.model.fetchCartID(),{'callback':'handleTrySession','datapointer':'appCartExists'});
-			app.calls.whoAmI.init({'callback':'suppressErrors'},'immutable'); //get this info when convenient.
+//			app.u.dump(" -> session retrieved from localstorage..");
+			app.vars.cartID = app.model.fetchCartID();
+			app.model.destroy('cartDetail'); //do not use a cart from localstorage
+			app.calls.cartDetail.init({'callback':'handleNewSession'},'immutable');
+			app.calls.whoAmI.init({},{'callback':'suppressErrors'},'immutable'); //get this info when convenient.
 			app.model.dispatchThis('immutable');
 			}
 		else	{
-			app.u.dump(" -> go get a new session id.");
-			app.calls.appCartCreate.init({'callback':'handleNewSession'});
+//			app.u.dump(" -> go get a new cart id.");
+			app.calls.appCartCreate.init({'callback':'handleNewSession'},'immutable');
 			app.model.dispatchThis('immutable');
 			}
-		
+//		this.u.dump(" -> finished onready except thirdPartyInits");
 //if third party inits are not done before extensions, the extensions can't use any vars loaded by third parties. yuck. would rather load our code first.
 // -> EX: username from FB and OPC.
 		app.u.handleThirdPartyInits();
-		
+//		this.u.dump(" -> finished thirdPartyInits");
 		}, //onReady
 					// //////////////////////////////////   CALLS    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\ \\		
 
@@ -227,7 +233,7 @@ If the data is not there, or there's no data to be retrieved (a Set, for instanc
 				app.model.addDispatchToQ(obj,'immutable');
 				}
 			}, //appBuyerCreate
-			
+
 		appBuyerLogin : {
 			init : function(obj,_tag)	{
 				var r = 0;
@@ -283,29 +289,12 @@ If the data is not there, or there's no data to be retrieved (a Set, for instanc
 				}
 			},//appCartCreate
 
-//always uses immutable Q
-//formerly canIHaveSession
-		appCartExists : {
-			init : function(cartid,_tag)	{
-//					app.u.dump('BEGIN app.calls.appCartExists');
-				app.vars.cartID = cartid; //needed for the request. may get overwritten if not valid.
-				this.dispatch(cartid,_tag);
-				return 1;
-				},
-			dispatch : function(cartid,_tag)	{
-				var obj = {};
-				obj["_cmd"] = "appCartExists"; 
-				obj["_tag"] = _tag;
-				app.model.addDispatchToQ(obj,'immutable');
-				}
-			}, //appCartExists
-
-		appCategoryDetail : {
+		appNavcatDetail : {
 			init : function(obj,_tag,Q)	{
 				if(obj && obj.safe)	{
 					var r = 0; //will return 1 if a request is needed. if zero is returned, all data needed was in local.
 					_tag = _tag || {};
-					_tag.datapointer = 'appCategoryDetail|'+obj.safe;
+					_tag.datapointer = 'appNavcatDetail|'+obj.safe;
 					
 //the model will add the value of _tag.detail into the response so it is stored in the data and can be referenced for future comparison.
 					if(obj.detail)	{_tag.detail = obj.detail} else {}
@@ -327,17 +316,21 @@ If the data is not there, or there's no data to be retrieved (a Set, for instanc
 						}
 					}
 				else	{
-					app.u.throwGMessage("In calls.appCategoryDetail, obj.safe not passed.");
+					app.u.throwGMessage("In calls.appNavcatDetail, obj.safe not passed.");
 					app.u.dump(obj);
 					}
 				return r;
 				},
 			dispatch : function(obj,_tag,Q)	{
-				obj._cmd = "appCategoryDetail";
+				obj._cmd = "appNavcatDetail";
 				obj._tag = _tag;
 				app.model.addDispatchToQ(obj,Q);	
 				}
-			},//appCategoryDetail		
+			},//appNavcatDetail		
+
+
+
+
 
 
 //get a list of newsletter subscription lists. partition specific.
@@ -373,7 +366,31 @@ If the data is not there, or there's no data to be retrieved (a Set, for instanc
 				app.model.addDispatchToQ(obj,Q || 'immutable');	
 				}
 			},//appSendMessage
-			
+//obj should contain @products (array of pids), ship_postal (zip/postal code) and ship_country (as 2 digit country code)
+		appShippingTransitEstimate : {
+			init : function(obj,_tag,Q)	{
+				var r = 0;
+				if(obj && obj.ship_postal && obj.ship_country && typeof obj['@products'] === 'object')	{
+					this.dispatch(obj,_tag,Q);
+					r = 1;
+					}
+				else if(obj)	{
+					$('#globalMessaging').anymessage({'message':'In app.calls.appShippingTransitEstimate requires ship_postal ['+obj.ship_postal+'], ship_country ['+obj.ship_country+'] and @products ['+typeof obj['@products']+']','gMessage':true});
+					}
+				else	{
+					$('#globalMessaging').anymessage({'message':'In app.calls.appShippingTransitEstimate, no obj passed.','gMessage':true});
+					}
+				
+				return r;
+				},
+			dispatch : function(obj,_tag,Q)	{
+				obj._tag = _tag || {};
+				obj._tag.datapointer = 'appShippingTransitEstimate';
+				obj._cmd = "appShippingTransitEstimate"
+				app.model.addDispatchToQ(obj,Q || 'passive');	
+				}
+			},//appShippingTransitEstimate
+
 //get a product record.
 //required params: obj.pid.
 //optional params: obj.withInventory and obj.withVariations
@@ -403,6 +420,7 @@ If the data is not there, or there's no data to be retrieved (a Set, for instanc
 					else 	{
 						app.u.handleCallback(_tag);
 						}
+					if(obj.withInventory)	{obj.inventory=1}
 					}
 				else	{
 					app.u.throwGMessage("In calls.appProductGet, required parameter pid was not passed");
@@ -460,7 +478,30 @@ see jquery/api webdoc for required/optional param
 				app.model.addDispatchToQ(obj,Q || 'immutable');
 				}
 			},//appReviewAdd
-			
+
+		appStash : {
+			init : function(obj,_tag,Q)	{
+				this.dispatch(obj,_tag,Q);
+				return 1;
+				},
+			dispatch : function(obj,_tag,Q)	{
+				obj["_cmd"] = "appStash";
+				obj['_tag'] = _tag;
+				app.model.addDispatchToQ(obj,Q || 'immutable');	
+				}
+			},//appStash
+
+		appSuck : {
+			init : function(obj,_tag,Q)	{
+				this.dispatch(obj,_tag,Q);
+				return 1;
+				},
+			dispatch : function(obj,_tag,Q)	{
+				obj["_cmd"] = "appSuck";
+				obj['_tag'] = _tag;
+				app.model.addDispatchToQ(obj,Q || 'immutable');	
+				}
+			},//appSuck
 
 
 //the authentication through FB sdk has already taken place and this is an internal server check to verify integrity.	
@@ -502,14 +543,16 @@ see jquery/api webdoc for required/optional param
 			dispatch : function(obj,_tag){
 				app.u.dump("Attempting to log in");
 				obj._cmd = 'authAdminLogin';
-				app.vars.userid = obj.userid.toLowerCase();	 // important!
-				obj.authtype = "md5";
-				obj.ts = app.u.ymdNow();
-				obj.authid = Crypto.MD5(obj.password+obj.ts);
+				if(obj.authtype == 'md5')	{
+					app.vars.userid = obj.userid.toLowerCase();	 // important!
+					obj.ts = app.u.ymdNow();
+					obj.authid = Crypto.MD5(obj.password+obj.ts);
+					obj.device_notes = "";
+					delete obj.password;
+					}
+
 				obj._tag = _tag || {};
-				obj.device_notes = "";
-				if(obj.persitentAuth)	{obj._tag.datapointer = "authAdminLogin"} //this is only saved locally IF 'keep me logged in' is true.
-				delete obj.password;
+				if(obj.persistentAuth)	{obj._tag.datapointer = "authAdminLogin"} //this is only saved locally IF 'keep me logged in' is true OR it's passed in _tag
 				app.model.addDispatchToQ(obj,'immutable');
 				}
 			}, //authentication
@@ -672,12 +715,12 @@ see jquery/api webdoc for required/optional param
 		buyerProductListAppendTo : {
 			init : function(obj,_tag,Q)	{
 				var r = 0;
-				if(obj && obj.listID)	{
+				if(obj && obj.listid)	{
 					r = 1;
 					this.dispatch(obj,_tag,Q);
 					}
 				else	{
-					$('#globalMessaging').anymessage({'message':'buyerProductListDetail requires listID','gMessage':true});
+					$('#globalMessaging').anymessage({'message':'buyerProductListDetail requires listid','gMessage':true});
 					}
 				return r;
 				},
@@ -724,6 +767,13 @@ see jquery/api webdoc for required/optional param
 
 		buyerLogout : {
 			init : function(_tag)	{
+// *** 201338 -> logging out should clear this fields as they contain buyer specific data.
+				app.model.destroy('appBuyerLogin');
+				app.model.destroy('buyerWalletList');
+				app.model.destroy('buyerAddressList');
+				app.model.destroy('appPaymentMethods');
+				app.model.destroy('whoAmI');
+				app.model.destroy('cartDetail');
 				this.dispatch(_tag);
 				return 1;
 				},
@@ -874,18 +924,30 @@ see jquery/api webdoc for required/optional param
 				return 1;
 				},
 			dispatch : function(_tag,Q)	{
-				app.model.addDispatchToQ({"_cmd":"ping","_tag":_tag},Q); //get new session id.
+				app.model.addDispatchToQ({"_cmd":"ping","_tag":_tag},Q || 'mutable'); //get new session id.
 				}
 			}, //ping
 
 //used to get a clean copy of the cart. ignores local/memory. used for logout.
-//this is old and, arguably, should be a utility. however it's used a lot so for now, left as is. !!! fix during cleanup or big release.
+//this is old and, arguably, should be a utility. however it's used a lot so for now, left as is. ### search and destroy when convenient.
 		refreshCart : {
 			init : function(_tag,Q)	{
 				app.model.destroy('cartDetail');
 				app.calls.cartDetail.init(_tag,Q);
 				}
-			}, // refreshCart removed comma from here line 383
+			}, // refreshCart
+
+		time : {
+			init : function(_tag,Q)	{
+				this.dispatch(_tag,Q);
+				return true;
+				},
+			dispatch : function(_tag,Q)	{
+				_tag = _tag || {};
+				_tag.datapointer = 'time';
+				app.model.addDispatchToQ({"_cmd":"time","_tag":_tag},Q || 'mutable');	
+				}
+			}, //time
 
 
 		whereAmI : {
@@ -910,14 +972,16 @@ see jquery/api webdoc for required/optional param
 
 //for now, no fetch is done here. it's assumed if you execute this, you don't know who you are dealing with.
 		whoAmI : {
-			init : function(_tag,Q)	{
-				this.dispatch(_tag,Q);
+			init : function(obj,_tag,Q)	{
+				this.dispatch(obj,_tag,Q);
 				return 1;
 				},
-			dispatch : function(_tag,Q)	{
-				_tag = _tag || {}; 
-				_tag.datapointer = "whoAmI"
-				app.model.addDispatchToQ({"_cmd":"whoAmI","_tag" : _tag},Q);	
+			dispatch : function(obj,_tag,Q)	{
+				obj = obj || {};
+				obj._cmd = "whoAmI";
+				obj._tag = _tag || {}; 
+				obj._tag.datapointer = "whoAmI"
+				app.model.addDispatchToQ(obj,Q);
 				}
 			}//whoAmI
 
@@ -932,6 +996,29 @@ app.u.throwMessage(responseData); is the default error handler.
 	callbacks : {
 		
 
+		fileDownloadInModal : {
+			onSuccess : function(_rtag)	{
+				app.u.dump("BEGIN callbacks.fileDownloadInModal");
+				app.u.fileDownloadInModal({
+					'filename':app.data[_rtag.datapointer].FILENAME || _rtag.filename,
+					'mime_type':app.data[_rtag.datapointer].MIMETYPE,
+					'body':app.data[_rtag.datapointer].body,
+					'skipDecode':_rtag.skipDecode || false
+					});
+				if(_rtag.button && _rtag.button instanceof jQuery)	{
+					if(_rtag.button.is('button') && _rtag.button.hasClass('ui-button'))	{
+						_rtag.button.button('enable');
+						}
+					else if(_rtag.button.is('button'))	{
+						_rtag.button.prop('disabled','').removeProp('disabled');
+						}
+					}
+				if(_rtag.jqObj && _rtag.jqObj instanceof jQuery)	{
+					_rtag.jqObj.hideLoading();
+					}
+				}
+			},
+
 
 		handleNewSession : {
 //app.vars.cartID is set in the method. no need to set it here.
@@ -945,27 +1032,10 @@ app.u.throwMessage(responseData); is the default error handler.
 				}
 			},//convertSessionToOrder
 
-//executed when appCartExists is requested.
-//app.app.vars.cartID is already set by this point. need to reset it onError.
-// onError does NOT need to nuke app.vars.cartID because it's handled in handleResponse_appCartExists 
-		handleTrySession : {
-			onSuccess : function(_rtag)	{
-//				app.u.dump('BEGIN app.callbacks.handleTrySession.onSuccess');
-//				app.u.dump(" -> exists: "+app.data.appCartExists.exists);
-				if(app.data.appCartExists.exists >= 1)	{
-					app.u.dump(' -> valid session id.  Proceed.');
-// if there are any  extensions(and most likely there will be) add then to the controller.
-// This is done here because a valid cart id is required.
-					app.model.addExtensions(app.vars.extensions);
-					}
-				else	{
-					app.u.dump(' -> UH OH! invalid session ID. Generate a new session. nuke localStorage if domain is ssl.zoovy.com.');
-					app.calls.appCartCreate.init({'callback':'handleNewSession'});
-					app.model.dispatchThis('immutable');
-					}
-				}
-			}, //handleTrySession
-		
+
+
+
+	
 //very similar to the original translate selector in the control and intented to replace it. 
 //This executes the handleAppEvents in addition to the normal translation.
 //jqObj is required and should be a jquery object.
@@ -977,8 +1047,30 @@ app.u.throwMessage(responseData); is the default error handler.
 					var $target = _rtag.jqObj; //shortcut
 					
 //anycontent will disable hideLoading and loadingBG classes.
-					$target.anycontent({data: app.data[_rtag.datapointer],'templateID':_rtag.templateID});
-					app.u.handleAppEvents($target);
+/*					$target.anycontent({data: app.data[.datapointer],'templateID':_rtag.templateID}); */
+// * 201318 -> anycontent should have more flexibility. templateID isn't always required, template placeholder may have been added already.
+					$target.anycontent(_rtag);
+
+					app.u.handleCommonPlugins($target);
+					app.u.handleButtons($target);
+					
+					
+// ** 201338 -> support for event delegation. only turned on if enabled. disables execution of app event code. Use one or the other, not both.
+					if(_rtag.handleEventDelegation)	{
+						app.u.dump(" ------> using delegated events in anycontent, not app events ");
+						app.u.handleEventDelegation($target);
+						}
+					else if(_rtag.skipAppEvents)	{}
+					else	{
+						app.u.handleAppEvents($target);
+						}
+
+					if(_rtag.applyEditTrackingToInputs)	{
+						app.ext.admin.u.applyEditTrackingToInputs($target); //applies 'edited' class when a field is updated. unlocks 'save' button.
+						}
+					if(_rtag.handleFormConditionalDelegation)	{
+						app.ext.admin.u.handleFormConditionalDelegation($('form',$target)); //enables some form conditional logic 'presets' (ex: data-panel show/hide feature)
+						}
 
 					}
 				else	{
@@ -1030,11 +1122,38 @@ app.u.throwMessage(responseData); is the default error handler.
 // a generic callback to allow for success messaging to be added. 
 // pass message for what will be displayed.  For error messages, the system messaging is used.
 		showMessaging : {
-			onSuccess : function(_rtag)	{
-//				app.u.dump("BEGIN app.callbacks.showMessaging");
-				var msg = app.u.successMsgObject(_rtag.message);
-				msg['_rtag'] = _rtag; //pass in _rtag as well, as that contains info for parentID.
-				app.u.throwMessage(msg);
+			onSuccess : function(_rtag,macroResponses)	{
+				app.u.dump("BEGIN app.callbacks.showMessaging");
+				if(_rtag.jqObj)	{
+//					app.u.dump(" -> jqObj is present.");
+//					app.u.dump(" -> jqObj.data(): "); app.u.dump(_rtag.jqObj.data());
+					_rtag.jqObj.hideLoading();
+					if(_rtag.jqObjEmpty)	{
+						_rtag.jqObj.empty();
+						}
+//you can't restore AND empty. it's empty, there's nothing to restore.
+					else {
+						if(_rtag.restoreInputsFromTrackingState)	{
+							app.u.dump(" -> restoreInputsFromTrackingState.");
+							app.ext.admin.u.restoreInputsFromTrackingState(_rtag.jqObj);
+							}
+						if(_rtag.removeFromDOMItemsTaggedForDelete)	{
+							app.u.dump(" -> removeFromDOMItemsTaggedForDelete.");
+							app.ext.admin.u.removeFromDOMItemsTaggedForDelete(_rtag.jqObj);
+							}
+						}
+					}
+
+				if(macroResponses && macroResponses['@RESPONSES'])	{
+					var $target = _rtag.jqObj || $("#globalMessaging");
+					macroResponses.persistent = _rtag.persistent === false ? false : true; //these responses should be displayed till turned off.
+					$target.anymessage(macroResponses);
+					}
+				else	{
+					var msg = app.u.successMsgObject(_rtag.message);
+					msg['_rtag'] = _rtag; //pass in _rtag as well, as that contains info for parentID.
+					app.u.throwMessage(msg);
+					}
 				}
 			}, //showMessaging
 		
@@ -1149,6 +1268,9 @@ css : type, pass, path, id (id should be unique per css - allows for not loading
 			}, //loadResourceFile
 
 
+
+
+
 //filename is full path of .css file (or valid relative path)
 //domID is optional id to add to <link> allows for removal or changing later.
 //if you pass a domID that already exists, that file is 'saved over'.
@@ -1176,166 +1298,377 @@ css : type, pass, path, id (id should be unique per css - allows for not loading
 
 
 
+
+//vars requires MIME_TYPE and body.
+//vars.filename is optional
+//opted to force this into a modal to reduce the likely of a bunch of unused blobs remaining on the DOM.
+//the dialog will empty/remove itself when closed.
+		fileDownloadInModal : function(vars)	{
+			app.u.dump("BEGIN app.u.fileDownloadInModal");
+			vars = vars || {};
+			if(vars.mime_type && vars.body)	{
+				app.u.dump(" -> mime type and body are set");
+				var filename = vars.filename || 'file';
+				var MIME_TYPE = vars.mime_type;
+
+				var $D = $("<div \/>",{'title':'File Ready for Download'}).html("Your file is ready for download: <br />").appendTo(document.body);
+				$D.dialog({
+					'modal' : true,
+					'autoOpen' : true,
+					'width' : 300,
+					'height' : 200,
+					close: function(event, ui)	{
+						$('body').css({'height':'auto','overflow':'auto'}) //bring browser scrollbars back.
+//						app.u.dump('got into dialog.close - destroy.');
+						$(this).dialog('destroy');
+						$(this).intervaledEmpty(1000,1);
+						} //will remove from dom on close
+					});
+
+// this worked, but not an ideal solution. we like blob better.
+//			var uri = 'data:'+MIME_TYPE+',' + encodeURIComponent(vars.body);
+//			var $a = $('<a>',{'download':filename || 'file',"href":uri}).text('download me data style').appendTo($D);
+//			$("<br \/>").appendTo($D);
+
+//if atob causes issues later, explore 	b64toBlob	 (found here: http://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript); //201324		
+//content returned on an API call will be base 64 encoded. app-generated content (report csv's) will not.
+//app.u.dump("vars.skipdecode: "+vars.skipDecode);
+
+				var	file = (vars.skipDecode) ? vars.body : atob(vars.body);
+//					if(MIME_TYPE.toLowerCase().indexOf('image') >= 0)	{
+					// Use typed arrays to convert the binary data to a Blob
+					//http://stackoverflow.com/questions/10473932/browser-html-force-download-of-image-from-src-dataimage-jpegbase64
+					var arraybuffer = new ArrayBuffer(file.length);
+					var L = file.length;
+					var view = new Uint8Array(arraybuffer);
+					for (var i=0; i < L; i++) {
+						view[i] = file.charCodeAt(i) & 0xff;
+						}
+					var bb = new Blob([arraybuffer], {type: 'application/octet-stream'});
+//						}
+//					else	{
+//						var bb = new Blob(new Array(file), {type: vars.MIME_TYPE});
+//						}
+				
+				var $a = $('<a>',{'download':filename,"href":window.URL.createObjectURL(bb)});
+
+				$a.addClass('dragout').attr('data-downloadurl',[MIME_TYPE, $a.attr('download'), $a.attr('href')].join(':')).text('download ready').on('click',function(){
+					var a = this;
+					a.textContent = 'Downloaded';
+					a.dataset.disabled = true;
+					$D.dialog('close');
+					// Need a small delay for the revokeObjectURL to work properly.
+					//revokeObjectURL causes browser to drop reference to the file.
+					setTimeout(function() {
+						window.URL.revokeObjectURL(a.href);
+						$D.empty().remove(); //nuke dialog.
+						}, 1500);
+					});
+
+				
+				$a.appendTo($D);
+				}
+			else	{
+				$('#globalMessaging').anymessage({"message":"In admin.u.fileDownloadInModal, either mime_type ["+vars.mime_type+"] or body ["+typeof vars.body+"] not passed.","gMessage":true});
+				}
+
+			},
+
+
+
+
+
+//The actual event type and the name used on the dom (focus, blur, etc) do not always match. Plus, I have a sneaking feeling we'll end up with differences between browsers.
+//This function can be used to regularize the event type. Wherever possible, we'll map to the jquery event type name.
+			normalizeEventType : function(type){
+				var r = type;
+				if(type == 'focusin')	{
+					r = 'focus';
+					}
+				else if(type == 'focusout')	{
+					r = 'blur';
+					}
+				return r;
+				},
+//run from inside the handleEventDelegation function
+			executeEvent : function($target,p){
+				p = p || {};
+				var newEventType = app.u.normalizeEventType(p.type);
+				app.u.dump(" ----> handle eventExecution ["+newEventType+"]");
+
+				if($target && $target instanceof jQuery && newEventType)	{
+//					app.u.dump(" -> $target.data()"); app.u.dump($target.data());
+// ** 201342 -> once currentTarget was being used instead of e.target, this code became unnecessary.
+//					if($target.data('app-'+newEventType))	{}
+//					else	{$target = $target.closest("[data-app-"+newEventType+"]")}; //chrome doesn't seem to be bubbling up like I expected. registers a data-app that is on a button on the span for the icon/text
+					
+					if($target.data('app-'+newEventType))	{
+						var
+							actionExtension = $target.data('app-'+newEventType).split('|')[0],
+							actionFunction =  $target.data('app-'+newEventType).split('|')[1];
+		
+						if(actionExtension && actionFunction)	{
+							if(app.ext[actionExtension] && app.ext[actionExtension].e[actionFunction] && typeof app.ext[actionExtension].e[actionFunction] === 'function')	{
+					//execute the app event.
+								app.ext[actionExtension].e[actionFunction]($target,p);
+								}
+							else	{
+								$('#globalMessaging').anymessage({'message':"In app.u.executeEvent, extension ["+actionExtension+"] and function["+actionFunction+"] both passed, but the function does not exist within that extension.",'gMessage':true})
+								}
+							}
+						else	{
+							$('#globalMessaging').anymessage({'message':"In app.u.executeEvent, app-click ["+$target.data('app-click')+"] is invalid.",'gMessage':true});
+							}						
+						}
+					else	{
+						$('#globalMessaging').anymessage({'message':"In app.u.executeEvent, $target doesn't have data-app-["+newEventType+"] set["+$target.data('app-'+newEventType)+"].",'gMessage':true})
+						//
+						}
+					}
+				else	{
+					$('#globalMessaging').anymessage({'message':"In app.u.executeEvent, $target is empty or not a valid jquery instance [isValid: "+($target instanceof jQuery)+"] or p.type ["+newEventType+"] is not set.",'gMessage':true})
+					}
+				},
+
+//run on a container to manage event delegation.  add a data-app-EVENTTYPE to an element, where EVENTTYPE is = to an event, such as click or change.
+//The value of the data tag should be = "EXTENSION|FUNCTIONNAME" where extension = your extension and FUNCTIONNAME is the name of a function within the 'e' node.
+//This code is used for adding events only, not styling.  Use renderFormats for that or the 'apply' classes.
+//p in event = optional params. can be added when 'trigger' is executed. these are then passed into the app event and can be used to change behavior, if necessary.
+//a class is added when event delegation is added. The class is checked for when the function is run to prevent double-delegation.
+//a class is used instead of a data-attrib to be more efficient. Since we're adding/removing the class, it's 'safe' to use a class for this.
+			handleEventDelegation : function($container)	{
+//				app.u.dump("BEGIN app.u.handleEventDelegation");
+//				app.u.dump(" -> $container.data('hasdelegatedevents'): "+$container.data('hasdelegatedevents'));
+//				app.u.dump(" -> $container.closest('[data-hasdelegatedevents]').length: "+$container.closest('[data-hasdelegatedevents]').length);
+//				app.u.dump(" -> $container.parents('[data-hasdelegatedevents]').length: "+$container.parents('[data-hasdelegatedevents]').length);
+
+				if($container.data('hasdelegatedevents') || $container.closest('[data-hasdelegatedevents]').length >= 1)	{
+					app.u.dump("handleEventDelegation was run on an element (or one of it's parents) that already has events delegated. DELEGATION SKIPPED.");
+					}
+				else	{
+					var supportedEvents = new Array("click","change","focus","blur","submit");
+					for(var i = 0; i < supportedEvents.length; i += 1)	{
+						$container.on(supportedEvents[i],"[data-app-"+supportedEvents[i]+"]",function(e,p){
+//							app.u.dump(" -> triggering the execute event code: "); app.u.dump(e);
+							app.u.executeEvent($(e.currentTarget),$.extend(p,e));
+							});						
+						}
+					$container.addClass('eventDelegation'); //here for the debugger.
+					$container.attr('data-hasdelegatedevents',true); //is a attribute so that an element can look for it via parent()
+					}
+				},
+
+			handleCommonPlugins : function($context)	{
+				$('.applyAnycb',$context).anycb();
+				$('.applyAnytable',$context).anytable();
+				$('.toolTip',$context).tooltip();
+				$('.applyAnytabs',$context).anytabs();
+				},
+
+// a utility for converting to jquery button()s.  use applyButton and optionally set some data attributes for text and icons.
+			handleButtons : function($target)	{
+//			app.u.dump("BEGIN app.u.handleButtons");
+				if($target && $target instanceof jQuery)	{
+					$('.applyButton',$target).each(function(index){
+//					app.u.dump(" -> index: "+index);
+						var $btn = $(this);
+						$btn.button();
+// SANITY -> $btn may NOT be on the DOM when this is run.
+						if($btn.data('icon-primary') && $btn.data('icon-secondary'))	{
+							$btn.button( "option", "icons", { primary: $btn.data('icon-primary'), secondary: $btn.data('icon-secondary')} );
+							}
+						else if($btn.data('icon-primary'))	{
+							$btn.button( "option", "icons", { primary: $btn.data('icon-primary')} );
+							}
+						else if($btn.data('icon-secondary'))	{
+							$btn.button( "option", "icons", { secondary: $btn.data('icon-secondary')} );
+							}
+						else	{} //no icon specified.
+						
+						if($btn.data('text') === false)	{
+							$btn.button( "option", "text", false );
+							}
+						});
+					}
+				else	{
+					$('#globalMessaging').anymessage({"message":"In app.u.handleButtons, $target was empty or not a valid jquery instance. ","gMessage":true});
+					}
+				},
+
 //a UI Action should have a databind of data-app-event (this replaces data-btn-action).
 //value of action should be EXT|buttonObjectActionName.  ex:  admin_orders|orderListFiltersUpdate
 //good naming convention on the action would be the object you are dealing with followed by the action being performed OR
 // if the action is specific to a _cmd or a macro (for orders) put that as the name. ex: admin_orders|orderItemAddBasic
 //obj is some optional data. obj.$content would be a common use.
-// !!! this code is duplicated in the controller now. change all references in the version after 201308 (already in use in UI)
-		handleAppEvents : function($target,obj)	{
-				app.u.dump("BEGIN admin.u.handleAppEvents");
-				obj = obj || {}; //needs to be outside 'each' or obj gets set to blank.
-				if($target && $target.length && typeof($target) == 'object')	{
-//					app.u.dump(" -> target exists"); app.u.dump($target);
-					$("[data-app-event]",$target).each(function(){
-						var $ele = $(this),
-						extension = $ele.data('app-event').split("|")[0],
-						action = $ele.data('app-event').split("|")[1];
-						if(action && extension && typeof app.ext[extension].e[action] == 'function'){
-//if an action is declared, every button gets the jquery UI button classes assigned. That'll keep it consistent.
-//if the button doesn't need it (there better be a good reason), remove the classes in that button action.
-							app.ext[extension].e[action]($ele,obj);
-							} //no action specified. do nothing. element may have it's own event actions specified inline.
-						else	{
-							app.u.throwGMessage("In admin.u.handleAppEvents, unable to determine action ["+action+"] and/or extension ["+extension+"] and/or extension/action combination is not a function");
-							}
-						});
+			handleAppEvents : function($target,obj)	{
+	//				app.u.dump("BEGIN app.u.handleAppEvents");
+					obj = obj || {}; //needs to be outside 'each' or obj gets set to blank.
+					if($target && $target.length && typeof($target) == 'object')	{
+	//					app.u.dump(" -> target exists"); app.u.dump($target);
+	//don't auto-pass context. will be harder for event delegation
+						$("[data-app-event]",$target).each(function(){
+							var $ele = $(this),
+							extension = $ele.data('app-event').split("|")[0],
+							action = $ele.data('app-event').split("|")[1];
+							if(action && extension && app.ext[extension] && app.ext[extension].e && typeof app.ext[extension].e[action] == 'function'){
+	//if an action is declared, every button gets the jquery UI button classes assigned. That'll keep it consistent.
+	//if the button doesn't need it (there better be a good reason), remove the classes in that button action.
+								app.ext[extension].e[action]($ele,obj);
+								} //no action specified. do nothing. element may have it's own event actions specified inline.
+							else	{
+								app.u.throwGMessage("In admin.u.handleAppEvents, unable to determine action ["+action+"] and/or extension ["+extension+" typeof app.data.extension: "+(extension ? typeof app.data[extension] : 'undefined')+"] and/or extension/action combination is not a function");
+								}
+							});
+						}
+					else	{
+						//don't throw error to user. target 'could' be in memory.
+						app.u.dump("In admin.u.handleAppEvents, target was either not specified/an object ["+($target instanceof jQuery)+"] or does not exist on DOM.",'warn');
+						}
+					
+					}, //handleAppEvents
+
+			printByjqObj : function($ele)	{
+				if($ele && $ele.length)	{
+					var html="<html><style>@media print{.pageBreak {page-break-after:always} .hide4Print {display:none;}}</style><body style='font-family:sans-serif;'>";
+					html+= $ele.html();
+					html+="</body></html>";
+					
+					var printWin = window.open('','','left=0,top=0,width=600,height=600,toolbar=0,scrollbars=0,status=0');
+	//a browser could disallow the window.open, which results in printWin NOT being defined and that ends in a JS error, so 'if' added.
+					if(printWin)	{
+						printWin.document.write(html);
+						printWin.document.close();
+						printWin.focus();
+						printWin.print();
+						printWin.close();
+						}				
 					}
 				else	{
-					app.u.throwGMessage("In admin.u.handleAppEvents, target was either not specified/an object ["+typeof $target+"] or does not exist ["+$target.length+"] on DOM.");
+					$('#globalMessaging').anymessage({'message':'In app.u.printBySelector, $ele not passed or not on DOM','gMessage':true});
 					}
-				
-				}, //handleAppEvents
+				},
 
-		printByjqObj : function($ele)	{
-			if($ele && $ele.length)	{
-				var html="<html><style>@media print{.pageBreak {page-break-after:always}}</style><body style='font-family:sans-serif;'>";
-				html+= $ele.html();
-				html+="</body></html>";
-				
-				var printWin = window.open('','','left=0,top=0,width=600,height=600,toolbar=0,scrollbars=0,status=0');
-//a browser could disallow the window.open, which results in printWin NOT being defined and that ends in a JS error, so 'if' added.
-				if(printWin)	{
-					printWin.document.write(html);
-					printWin.document.close();
-					printWin.focus();
-					printWin.print();
-					printWin.close();
-					}				
-				}
-			else	{
-				$('#globalMessaging').anymessage({'message':'In app.u.printBySelector, $ele not passed or not on DOM','gMessage':true});
-				}
-			},
-
-		printByElementID : function(id)	{
-			if(id && $(app.u.jqSelector('#',id)).length)	{
-				this.printBySelector($(app.u.jqSelector('#',id)));
-				}
-			else	{
-				app.u.dump("WARNING! - myRIA.a.printByElementID executed but not ID was passed ["+id+"] or was not found on DOM [$('#'+"+id+").length"+$('#'+id).length+"].");
-				}
-			}, //printByElementID
+			printByElementID : function(id)	{
+				if(id && $(app.u.jqSelector('#',id)).length)	{
+					app.u.printByjqObj($(app.u.jqSelector('#',id)));
+					}
+				else	{
+					app.u.dump("WARNING! - myRIA.a.printByElementID executed but not ID was passed ["+id+"] or was not found on DOM [$('#'+"+id+").length"+$('#'+id).length+"].");
+					}
+				}, //printByElementID
 
 //pass in a string (my.string.has.dots) and a nested data object, and the dots in the string will map to the object and return the value.
 //ex:  ('a.b',obj) where obj = {a:{b:'go pack go'}} -> this would return 'go pack go'
 //will be used in updates to translator.
 
 //http://stackoverflow.com/questions/5240785/split-abc/5240797#5240797
-		getObjValFromString : function (s,obj,char)	{
-			char = char || '.';
-			var o=obj, attrs=s.split(char);
-			while (attrs.length > 0) {
-				o = o[attrs.shift()];
-				if (!o) {o= null; break;}
-				}
-			return o;
-
-			}, //getObjValFromString
-
-		isThisBitOn : function(bit,int)	{
-			var B = Number(int).toString(2); //binary
-			return (B.charAt(bit) == 1) ? true : false; //1
-			},
-
-//http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-		guidGenerator : function() {
-			var S4 = function() {
-				return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
-				};
-			return (S4()+S4()+S4()+S4()+S4()+S4()+S4()+S4());
-			},
-
-//jump to an anchor. can use a name='' or id=''.  anchor is used in function name because that's the common name for this type of action. do not need to pass # sign.
-		jumpToAnchor : function(id)	{
-			window.location.hash=id;
-			},
-
-//uses throwMessage, but always adds the same generic message. value of 'err' is output w/ dump.
-//this should only be used for app errors (errors thrown from within the MVC, not as a result of an API call, in which case throwMessage should be used (handles request errors nicely)
-		throwGMessage : function(err,parentID){
-			var msg = this.youErrObject("Err: "+err+"<br \/>URI: "+document.location+"<br \/>Dev: console may contain additional details.","#");
-			msg.gMessage = true;
-			$(app.u.jqSelector('#',parentID || 'globalMessaging')).anymessage(msg);
-			},
-/*
-msg could be a string or an object.
-if an object, could be: {errid,errmsg,errtype}   OR   {msg_X_txt,msg_X_type,msg_X_id}
- -> if msg_X format, X will be an integer and _msgs will be set to indicate the # of messages.
-
-$target - a jquery object of the target/destination for the message itself. Will check err for parentID, targetID and if not present, check to see if globalMessaging is present AND visible.  If not visible, will open modal.
-returns the id of the message, so that an action can be easily added if needed (onclick or timeout w/ a hide, etc)
-
-persistant - this can be passed in as part of the msg object or a separate param. This was done because repeatedly, error messaging in the control
-and model that needed to be permanently displayed had to be converted into an object just for that and one line of code was turning into three.
-*/
-		throwMessage : function(msg,persistant){
-//			app.u.dump("BEGIN app.u.throwMessage");
-//			app.u.dump(" -> msg follows: "); app.u.dump(msg);
-
-			
-
-			var $target, //where the app message will be appended.
-			r = true; //what is returned. true if a message was output
-
-			if(typeof msg === 'string')	{
-				if($('.appMessaging:visible').length > 0)	{
-					$target = $('.appMessaging');
+			getObjValFromString : function (s,obj,char)	{
+				char = char || '.';
+				var o=obj, attrs=s.split(char);
+				while (attrs.length > 0) {
+					o = o[attrs.shift()];
+					//I don't think this is handling zero well. !!!
+					if (!o) {o= null; break;}
 					}
-				else	{
-					$target = $('#globalMessaging');
+				return o;
+	
+				}, //getObjValFromString
+
+			getDomainFromURL : function(URL)	{
+				var r ; //what is returned. takes http://www.domain.com/something.html and converts to domain.com
+				r = URL.replace(/([^:]*:\/\/)?([^\/]+\.[^\/]+)/g, '$2');
+				if(r.indexOf('www.') == 0)	{r = r.replace('www.','')}
+				if(r.indexOf('/'))	{r = r.split('/')[0]}
+				return r;
+				},
+	
+			isThisBitOn : function(bit,int)	{
+				var B = Number(int).toString(2); //binary
+				return (B.charAt(bit) == 1) ? true : false; //1
+				},
+	
+	//http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+			guidGenerator : function() {
+				var S4 = function() {
+					return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+					};
+				return (S4()+S4()+S4()+S4()+S4()+S4()+S4()+S4());
+				},
+	
+	//jump to an anchor. can use a name='' or id=''.  anchor is used in function name because that's the common name for this type of action. do not need to pass # sign.
+			jumpToAnchor : function(id)	{
+				window.location.hash=id;
+				},
+	
+	//uses throwMessage, but always adds the same generic message. value of 'err' is output w/ dump.
+	//this should only be used for app errors (errors thrown from within the MVC, not as a result of an API call, in which case throwMessage should be used (handles request errors nicely)
+			throwGMessage : function(err,parentID){
+				var msg = this.youErrObject("Err: "+err+"<br \/>URI: "+document.location+"<br \/>Dev: console may contain additional details.","#");
+				msg.gMessage = true;
+				$(app.u.jqSelector('#',parentID || 'globalMessaging')).anymessage(msg);
+				},
+	/*
+	msg could be a string or an object.
+	if an object, could be: {errid,errmsg,errtype}   OR   {msg_X_txt,msg_X_type,msg_X_id}
+	 -> if msg_X format, X will be an integer and _msgs will be set to indicate the # of messages.
+	
+	$target - a jquery object of the target/destination for the message itself. Will check err for parentID, targetID and if not present, check to see if globalMessaging is present AND visible.  If not visible, will open modal.
+	returns the id of the message, so that an action can be easily added if needed (onclick or timeout w/ a hide, etc)
+	
+	persistent - this can be passed in as part of the msg object or a separate param. This was done because repeatedly, error messaging in the control
+	and model that needed to be permanently displayed had to be converted into an object just for that and one line of code was turning into three.
+	*/
+			throwMessage : function(msg,persistent){
+	//			app.u.dump("BEGIN app.u.throwMessage");
+	//			app.u.dump(" -> msg follows: "); app.u.dump(msg);
+	
+				
+	
+				var $target, //where the app message will be appended.
+				r = true; //what is returned. true if a message was output
+	
+				if(typeof msg === 'string')	{
+					msg = this.youErrObject(msg,"#"); //put message into format anymessage can understand.
 					}
-				msg = this.youErrObject(msg,"#"); //put message into format anymessage can understand.
-				$target.anymessage(msg);
-				}
-			else if(typeof msg === 'object')	{
-//				app.u.dump(" -> msg: "); app.u.dump(msg);
-				if(msg.parentID){$target = $(app.u.jqSelector('#',msg.parentID));}
-				else if(msg._rtag && (msg._rtag.parentID || msg._rtag.targetID || msg._rtag.selector))	{
-					if(msg._rtag.parentID)	{$target = $(app.u.jqSelector('#',msg._rtag.parentID))}
-					else if(msg._rtag.targetID)	{$target = $(app.u.jqSelector('#',msg._rtag.targetID))}
-					else	{
-						$target = $(app.u.jqSelector(msg['_rtag'].selector.charAt(0),msg['_rtag'].selector));
+	
+				if(typeof msg === 'object')	{
+	//				app.u.dump(" -> msg: "); app.u.dump(msg);
+					if(msg._rtag && msg._rtag.jqObj)	{$target = msg._rtag.jqObj}
+					else if(msg.parentID){$target = $(app.u.jqSelector('#',msg.parentID));}
+					else if(msg._rtag && (msg._rtag.parentID || msg._rtag.targetID || msg._rtag.selector))	{
+						if(msg._rtag.parentID)	{$target = $(app.u.jqSelector('#',msg._rtag.parentID))}
+						else if(msg._rtag.targetID)	{$target = $(app.u.jqSelector('#',msg._rtag.targetID))}
+						else	{
+							$target = $(app.u.jqSelector(msg['_rtag'].selector.charAt(0),msg['_rtag'].selector));
+							}
 						}
+					else if($('.appMessaging:visible').length > 0)	{$target = $('.appMessaging:visible');}
+	// ** 201318 moved globalMessaging targeting above mainContentArea, as it is a much preferable alternative.
+	//	target of last resort is now the body element
+					else if($('#globalMessaging').length)	{$target = $('#globalMessaging')}
+					else if($('#mainContentArea').length)	{$target = $('#mainContentArea')}
+					else	{
+						$target = $("<div \/>").attr('title',"Error!");
+						$target.addClass('displayNone').appendTo('body'); 
+						$target.dialog({
+							modal: true,
+							close: function(event, ui)	{
+								$(this).dialog('destroy').remove();
+								}
+							});
+						}
+					$target.anymessage(msg);
 					}
-				else if($('.appMessaging:visible').length > 0)	{$target = $('.appMessaging');}
-				else if($('#mainContentArea').length)	{$target = $('#mainContentArea')}
 				else	{
-					//tried and tried and tried. unable to find a good location.
-					$target = $('#globalMessaging');
+					app.u.dump("WARNING! - unknown type ["+typeof err+"] set on parameter passed into app.u.throwMessage");
+					r = false; //don't return an html id.
 					}
-				$target.anymessage(msg);
-				}
-			else	{
-				app.u.dump("WARNING! - unknown type ["+typeof err+"] set on parameter passed into app.u.throwMessage");
-				r = false; //don't return an html id.
-				}
-//get rid of all the loading gfx in the target so users know the process has stopped.
-			$target.removeClass('loadingBG');
-			if(typeof jQuery().hideLoading == 'function'){$target.hideLoading()} //used in UI. plan on switching everything applicable to this.
-// 			app.u.dump(" -> $target in error handling: "); app.u.dump($target);
-			return r;
-			},
+	//get rid of all the loading gfx in the target so users know the process has stopped.
+				$target.removeClass('loadingBG');
+				if(typeof jQuery().hideLoading == 'function'){$target.hideLoading()} //used in UI. plan on switching everything applicable to this.
+	// 			app.u.dump(" -> $target in error handling: "); app.u.dump($target);
+				return r;
+				},
 
 
 
@@ -1343,19 +1676,20 @@ and model that needed to be permanently displayed had to be converted into an ob
 // pass in a message and the entire success object is returned.
 // keep this simple. don't add support for icons or message type. If that degree of control is needed, build your own object and pass that in.
 // function used in store_product (and probably more)
-		successMsgObject : function(msg)	{
-			return {'errid':'#','errmsg':msg,'errtype':'success','uiIcon':'check','uiClass':'success'}
-			},
-
-		errMsgObject : function(msg,errid)	{
-			return {'errid':errid || '#','errmsg':msg,'errtype':'apperr','uiIcon':'alert','uiClass':'error'}
-			},
-		statusMsgObject : function(msg)	{
-			return {'errid':'#','errmsg':msg,'errtype':'statusupdate','uiIcon':'transferthick-e-w','uiClass':'statusupdate'}
-			},
-		youErrObject : function(errmsg,errid)	{
-			return {'errid':errid,'errmsg':errmsg,'errtype':'youerr','uiIcon':'alert','uiClass':'highlight'}
-			},
+// once throwMessage is gone completely, we can nuke the uiClass and uiIcon
+			successMsgObject : function(msg)	{
+				return {'errid':'#','errmsg':msg,'message':msg,'errtype':'success','iconClass':'app-icon-success'}
+				},
+	
+			errMsgObject : function(msg,errid)	{
+				return {'errid':errid || '#','errmsg':msg,'errtype':'apperr','iconClass':'app-icon-error','containerClass':'ui-state-error'}
+				},
+			statusMsgObject : function(msg)	{
+				return {'errid':'#','errmsg':msg,'errtype':'statusupdate','iconClass':'app-icon-warn','containerClass':'ui-state-statusupdate'}
+				},
+			youErrObject : function(errmsg,errid)	{
+				return {'errid':errid,'errmsg':errmsg,'errtype':'youerr','iconClass':'ui-icon-youerr','containerClass':'ui-state-highlight'}
+				},
 
 
 /*
@@ -1366,30 +1700,33 @@ URI PARAM
 
 
 //pass in a name and if it is a parameter on the uri, the value is returned.
-		getParameterByName : function(name)	{
-			name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
-			var regexS = "[\\?&]" + name + "=([^&#]*)";
-			var regex = new RegExp(regexS);
-			var results = regex.exec(window.location.href);
-			if(results == null)
-				return "";
-			else
-				return decodeURIComponent(results[1].replace(/\+/g, " "));
-			}, //getParameterByName
-
-//turn a set of key value pairs (a=b&c=d) into an object. if string is from URI, use getParametersAsObject which handles encoding and executes this after.
-//formerly getParametersAsObject
-		kvp2Array : function(s)	{
-			var r = false;
-			if(s && s.indexOf('=') > -1)	{
-//				app.u.dump(s.replace(/"/g, "\",\x22"));
-				s = s.replace(/&amp;/g, '&'); //needs to happen before the decodeURIComponent (specifically for how banner elements are encoded )
-				// .replace(/"/g, "\",\x22")
-				r = JSON.parse(decodeURIComponent('{"' + s.replace(/&/g, "\",\"").replace(/=/g,"\":\"") + '"}'));
-				}
-			else	{}
-			return r;
-			}, //kvp2Array
+			getParameterByName : function(name)	{
+				name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+				var regexS = "[\\?&]" + name + "=([^&#]*)";
+				var regex = new RegExp(regexS);
+				var results = regex.exec(window.location.href);
+				if(results == null)
+					return "";
+				else
+					return decodeURIComponent(results[1].replace(/\+/g, " "));
+				}, //getParameterByName
+	
+//turn a set of key value pairs (a=b&c=d) into an object. pass location.search.substring(1); for URI params or location.hash.substring(1) for hash based params
+			kvp2Array : function(s)	{
+				var r = false;
+				if(s && s.indexOf('=') > -1)	{
+// ** 201346 -> an improved method for building the object. built in URI decoding.
+	//				app.u.dump(s.replace(/"/g, "\",\x22"));
+//					s = s.replace(/&amp;/g, '&'); //needs to happen before the decodeURIComponent (specifically for how banner elements are encoded )
+					// .replace(/"/g, "\",\x22")
+	//				app.u.dump('{"' + s.replace(/&/g, "\",\"").replace(/=/g,"\":\"") + '"}');
+//					r = JSON.parse(decodeURIComponent('{"' + s.replace(/&/g, "\",\"").replace(/=/g,"\":\"") + '"}'));
+					r = s?JSON.parse('{"' + s.replace(/&/g, '","').replace(/=/g,'":"') + '"}',function(key, value) { return key===""?value:decodeURIComponent(value) }):{};
+//					app.u.dump(" -> r: "); app.u.dump(r);
+					}
+				else	{}
+				return r;
+				}, //kvp2Array
 		
 
 /*
@@ -1399,31 +1736,32 @@ AUTHENTICATION/USER
 */
 
 //## allow for targetID to be passed in.
-		logBuyerOut : function()	{
-//kill all the memory and localStorage vars used in determineAuthentication
-			app.model.destroy('appBuyerLogin'); //nuke this so app doesn't fetch it to re-authenticate session.
-			app.model.destroy('cartDetail'); //need the cart object to update again w/out customer details.
-			app.model.destroy('whoAmI'); //need this nuked too.
-			app.vars.cid = null; //used in soft-auth.
-			
-			app.calls.buyerLogout.init({'callback':'showMessaging','message':'Thank you, you are now logged out'});
-			app.calls.refreshCart.init({},'immutable');
-			app.model.dispatchThis('immutable');
-			}, //logBuyerOut
+			logBuyerOut : function()	{
+	//kill all the memory and localStorage vars used in determineAuthentication
+				app.model.destroy('appBuyerLogin'); //nuke this so app doesn't fetch it to re-authenticate session.
+				app.model.destroy('cartDetail'); //need the cart object to update again w/out customer details.
+				app.model.destroy('whoAmI'); //need this nuked too.
+				app.vars.cid = null; //used in soft-auth.
+				localStorage.clear(); //clear everything from localStorage.
+				
+				app.calls.buyerLogout.init({'callback':'showMessaging','message':'Thank you, you are now logged out'});
+				app.calls.refreshCart.init({},'immutable');
+				app.model.dispatchThis('immutable');
+				}, //logBuyerOut
 
-		thisIsAnAdminSession : function()	{
-			//while technically this could be spoofed, the API wouldn't accept invalid values
-			return (app.vars.deviceid && app.vars.userid && app.vars.authtoken) ? true : false;
-			}, //thisIsAnAdminSession
-
-//uses the supported methods for determining if a buyer is logged in/session is authenticated.
-//neither whoAmI or appBuyerLogin are in localStorage to ensure data from a past session isn't used.
-		buyerIsAuthenticated : function()	{
-			r = false;
-			if(app.data.whoAmI && app.data.whoAmI.cid)	{r = true}
-			else if(app.data.appBuyerLogin && app.data.appBuyerLogin.cid)	{r = true}
-			return r;
-			}, //buyerIsAuthenticated
+			thisIsAnAdminSession : function()	{
+				//while technically this could be spoofed, the API wouldn't accept invalid values
+				return (app.vars.deviceid && app.vars.userid && app.vars.authtoken) ? true : false;
+				}, //thisIsAnAdminSession
+	
+	//uses the supported methods for determining if a buyer is logged in/session is authenticated.
+	//neither whoAmI or appBuyerLogin are in localStorage to ensure data from a past session isn't used.
+			buyerIsAuthenticated : function()	{
+				r = false;
+				if(app.data.whoAmI && app.data.whoAmI.cid)	{r = true}
+				else if(app.data.appBuyerLogin && app.data.appBuyerLogin.cid)	{r = true}
+				return r;
+				}, //buyerIsAuthenticated
 
 //pretty straightforward. If a cid is set, the session has been authenticated.
 //if the cid is in the cart/local but not the control, set it. most likely this was a cart passed to us where the user had already logged in or (local) is returning to the checkout page.
@@ -1431,61 +1769,91 @@ AUTHENTICATION/USER
 //if logged in via facebook, they are a thirdPartyGuest.
 //this could easily become smarter to take into account the timestamp of when the session was authenticated.
 			
-		determineAuthentication : function(){
-			var r = 'none';
-			if(this.thisIsAnAdminSession())	{r = 'admin'}
-			else if(app.u.buyerIsAuthenticated())	{r = 'authenticated'}
-//need to run third party checks prior to default 'guest' check because bill/email will get set for third parties
-//and all third parties would get 'guest'
-			else if(typeof FB != 'undefined' && !$.isEmptyObject(FB) && FB['_userStatus'] == 'connected')	{
-				r = 'thirdPartyGuest';
-//					app.thirdParty.fb.saveUserDataToSession();
-				}
-			else if(app.model.fetchData('cartDetail') && app.data.cartDetail && app.data.cartDetail.bill && app.data.cartDetail.bill.email)	{
-				r = 'guest';
-				}
-			else	{
-				//catch.
-				}
-//				app.u.dump('store_checkout.u.determineAuthentication run. authstate = '+r); 
-
-			return r;
-			}, //determineAuthentication
-
-//pass in a simple array and all the duplicates will be removed.
-//handy for dealing with product lists created on the fly (like cart accessories)
-		removeDuplicatesFromArray : function(arrayName)	{
-			var newArray=new Array();
-			label:for(var i=0; i<arrayName.length;i++ )	{  
-				for(var j=0; j<newArray.length;j++ )	{
-					if(newArray[j]==arrayName[i]) 
-					continue label;
+			determineAuthentication : function(){
+				var r = 'none';
+				if(this.thisIsAnAdminSession())	{r = 'admin'}
+				else if(app.u.buyerIsAuthenticated())	{r = 'authenticated'}
+	//need to run third party checks prior to default 'guest' check because bill/email will get set for third parties
+	//and all third parties would get 'guest'
+				else if(typeof FB != 'undefined' && !$.isEmptyObject(FB) && FB['_userStatus'] == 'connected')	{
+					r = 'thirdPartyGuest';
+	//					app.thirdParty.fb.saveUserDataToSession();
 					}
-				newArray[newArray.length] = arrayName[i];
-				}
-			return newArray;
-			},
+				else if(app.model.fetchData('cartDetail') && app.data.cartDetail && app.data.cartDetail.bill && app.data.cartDetail.bill.email)	{
+					r = 'guest';
+					}
+				else	{
+					//catch.
+					}
+				return r;
+				}, //determineAuthentication
+	
+	
+	
+//pass in an array and all the duplicates will be removed.
+//handy for dealing with product lists created on the fly (like cart accessories)
+			removeDuplicatesFromArray : function(arrayName)	{
+				var newArray=new Array();
+				label:for(var i=0; i<arrayName.length;i++ )	{  
+					for(var j=0; j<newArray.length;j++ )	{
+						if(newArray[j]==arrayName[i]) 
+						continue label;
+						}
+					newArray[newArray.length] = arrayName[i];
+					}
+				return newArray;
+				},
+
+//pass an object in as first param and an array as the second.
+//This will return a NEW object, removing any keys from 'obj' that are not declared in 'whitelist'.
+			getWhitelistedObject : function(obj,whitelist)	{
+				var r = {};
+				for(index in obj)	{
+	// ** 201332 indexOf changed to $.inArray for IE8 compatibility, since IE8 only supports the indexOf method on Strings
+					if($.inArray(index, whitelist) >= 0)	{
+						r[index] = obj[index];
+						}
+					else	{} //not in whitelist
+					}
+				return r;
+				},
+
+//pass an object in as first param and an array as the second.
+//This will return a NEW object, removing any keys from 'obj' that ARE declared in 'blacklist'
+			getBlacklistedObject : function(obj,blacklist)	{
+				var r = $.extend({},obj);
+				for(index in obj)	{
+	// ** 201332 indexOf changed to $.inArray for IE8 compatibility, since IE8 only supports the indexOf method on Strings
+					if($.inArray(index, blacklist) >= 0)	{
+						delete r[index];
+						}
+					else	{} //is not in blacklist
+					}
+				return r;
+				},
+
+
 
 //used in checkout to populate username: so either login or bill/email will work.
 //never use this to populate the value of an email form field because it may not be an email address.
 //later, this could be expanded to include a facebook id.
-		getUsernameFromCart : function()	{
-//			app.u.dump('BEGIN u.getUsernameFromCart');
-			var r = false;
-			if(app.data.cartDetail && app.data.cartDetail.customer && app.u.isSet(app.data.cartDetail.customer.login))	{
-				r = app.data.cartDetail.customer.login;
-//				app.u.dump(' -> login was set. email = '+r);
-				}
-			else if(app.data.cartDetail && app.data.cartDetail.bill && app.u.isSet(app.data.cartDetail.bill.email)){
-				r = app.data.cartDetail.bill.email;
-//				app.u.dump(' -> bill/email was set. email = '+r);
-				}
-			else if(!jQuery.isEmptyObject(app.vars.fbUser))	{
-//				app.u.dump(' -> user is logged in via facebook');
-				r = app.vars.fbUser.email;
-				}
-			return r;
-			}, //getUsernameFromCart
+			getUsernameFromCart : function()	{
+	//			app.u.dump('BEGIN u.getUsernameFromCart');
+				var r = false;
+				if(app.data.cartDetail && app.data.cartDetail.customer && app.u.isSet(app.data.cartDetail.customer.login))	{
+					r = app.data.cartDetail.customer.login;
+	//				app.u.dump(' -> login was set. email = '+r);
+					}
+				else if(app.data.cartDetail && app.data.cartDetail.bill && app.u.isSet(app.data.cartDetail.bill.email)){
+					r = app.data.cartDetail.bill.email;
+	//				app.u.dump(' -> bill/email was set. email = '+r);
+					}
+				else if(!jQuery.isEmptyObject(app.vars.fbUser))	{
+	//				app.u.dump(' -> user is logged in via facebook');
+					r = app.vars.fbUser.email;
+					}
+				return r;
+				}, //getUsernameFromCart
 
 
 /*
@@ -1496,31 +1864,24 @@ BROWSER/OS
 
 
 // .browser returns an object of info about the browser (name and version).
-		getBrowserInfo : function()	{
-			var r;
-			var BI = jQuery.browser; //browser information. returns an object. will set 'true' for value of browser 
-			jQuery.each(BI, function(i, val) {
-				if(val === true){r = i;}
-				});
-			r += '-'+BI.version;
-//			app.u.dump(' r = '+r);
-			return r;
-			}, //getBrowserInfo
+			getBrowserInfo : function()	{
+	// *** .browser() is not supported as of jquery 1.9+
+				var
+					ua= navigator.userAgent.toLowerCase(),
+					match = /(chrome)[ \/]([\w.]+)/.exec( ua ) || /(webkit)[ \/]([\w.]+)/.exec( ua ) || /(opera)(?:.*version|)[ \/]([\w.]+)/.exec( ua ) || /(msie) ([\w.]+)/.exec( ua ) || ua.indexOf("compatible") < 0 && /(mozilla)(?:.*? rv:([\w.]+)|)/.exec( ua ) || [];
+				//app.u.dump("browser: "+match[ 1 ] || "-" + match[ 2 ] || "0");
+				return match[ 1 ] || "-" + match[ 2 ] || "0";
+				}, //getBrowserInfo
 			
-		getOSInfo : function()	{
-
-			var OSName="Unknown OS";
-			if (navigator.appVersion.indexOf("Win")!=-1) OSName="WI";
-			if (navigator.appVersion.indexOf("Mac")!=-1) OSName="MC";
-			if (navigator.appVersion.indexOf("X11")!=-1) OSName="UN";
-			if (navigator.appVersion.indexOf("Linux")!=-1) OSName="LI";
-			return OSName;
-			}, //getOSInfo
-
-
-
-
-
+			getOSInfo : function()	{
+	
+				var OSName="Unknown OS";
+				if (navigator.appVersion.indexOf("Win")!=-1) OSName="WI";
+				if (navigator.appVersion.indexOf("Mac")!=-1) OSName="MC";
+				if (navigator.appVersion.indexOf("X11")!=-1) OSName="UN";
+				if (navigator.appVersion.indexOf("Linux")!=-1) OSName="LI";
+				return OSName;
+				}, //getOSInfo
 
 
 
@@ -1612,12 +1973,16 @@ VALIDATION
 				return false //disable key press
 				}
 			},
-		
+
+//* 201320 -> changed to support tab key.
 		alphaNumeric : function(event)	{
 			var r = true; //what is returned.
-			if((event.keyCode ? event.keyCode : event.which) == 8) {} //backspace. allow.
+//			if((event.keyCode ? event.keyCode : event.which) == 8) {} //backspace. allow.
+			var keyCode = event.keyCode ? event.keyCode : event.which
+			if(keyCode == 8 || keyCode == 9)	{} //allows backspace and tabs now. 
 			else	{
-				var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
+//				var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
+				var key = String.fromCharCode(keyCode);
 				var regex = new RegExp("^[a-zA-Z0-9]+$");
 				if (!regex.test(key)) {
 					event.preventDefault();
@@ -1638,55 +2003,165 @@ VALIDATION
 // checks for 'required' attribute and, if set, makes sure field is set and, if max-length is set, that the min. number of characters has been met.
 // if you do any validation outside of this and use anymessage to report those errors, you'll need to clear them yourself.
 		validateForm : function($form)	{
-			app.u.dump("BEGIN admin.u.validateForm");
+//			app.u.dump("BEGIN admin.u.validateForm");
 			if($form && $form instanceof jQuery)	{
 
 				
 				var r = true; //what is returned. false if any required fields are empty.
+				var radios = {};  //an object used to store whether or not radios are required and, if so, whether one is selected.
 				$form.showLoading({'message':'Validating'});
 
 				$('.formValidationError',$form).empty().remove(); //clear all previous error messaging
-				
-				$('input',$form).each(function(){
-					var $input = $(this),
-					$span = $("<span \/>").css('padding-left','6px').addClass('formValidationError');
+				var radios = {} //stores a list of which radio inputs are required.
+				$('input, select, textarea',$form).each(function(){
+					var
+						$input = $(this),
+						$span = $("<span \/>").css('padding-left','6px').addClass('formValidationError');
 					
 					$input.removeClass('ui-state-error'); //remove previous error class
 
-//					app.u.dump(" -> validating input."+$input.attr('name'));
+//app.u.dump(" -> "+$input.attr('name')+": "+$input.attr('type'));
+
+//					if($input.prop('type') != 'radio')	{
+//						app.u.dump(" -> validating input name: "+$input.attr('name')+" required: "+$input.attr('required') || 'no')
+//						}
 					
 					function removeClass($t){
 						$t.off('focus.removeClass').on('focus.removeClass',function(){$t.removeClass('ui-state-error')});
 						}
-					
-					if($input.attr('required') == 'required' && !$input.val())	{
+
+//					app.u.dump(" -> "+$input.attr('name')+" - required: "+$input.attr('required'));
+					if($input.is(':hidden') && $input.data('validation-rules') && $input.data('validation-rules').indexOf('skipIfHidden') >= 0)	{
+						//allows for a form to allow hidden fields that are only validated if they're displayed. ex: support fieldset for topic based questions.
+						//indexOf instead of == means validation-rules (notice the plural) can be a comma seperated list
+						}
+					else if($input.prop('disabled')){} //do not validate disabled fields. if required and blank and disabled, form would never submit.
+					else if($input.prop('type') == 'radio'){
+//keep a list of all required radios. only one entry per name.
+//app.u.dump(" -> $input.attr('name'): "+$input.attr('name')+' and required: '+$input.attr('required'));
+
+						if($input.attr('required') == 'required')	{
+							radios[$input.attr('name')] = 1
+							}
+						}
+//only validate the field if it's populated. if it's required and empty, it'll get caught by the required check later.
+					else if($input.attr('type') == 'url' && $input.val())	{
+						var urlregex = new RegExp("^(http:\/\/|https:\/\/|ftp:\/\/){1}([0-9A-Za-z]+\.)");
+						if (urlregex.test($input.val())) {}
+						else	{
+							r = false;
+							$input.addClass('ui-state-error');
+							$input.after($span.text('not a valid url. '));
+							$("<span class='toolTip' title='A url must be formatted as http, https, or ftp ://www.something.com/net/org/etc'>?<\/span>").tooltip().appendTo($span);
+							}
+						}
+
+// * 201336 -> make sure a number input has a numerical value.
+					else if($input.attr('type') == 'number' && $input.val())	{
+//						app.u.dump(" -> number validation. value: "+$input.val()+" and isNaN: "+isNaN($input.val()));
+						if (!isNaN($input.val())) {
+							if($input.attr('min') && (Number($input.val()) < Number($input.attr('min'))))	{
+								r = false;
+								$input.addClass('ui-state-error');
+								$input.after($span.text('minimum value of '+$input.attr('min')+'. '));
+								}
+							else if($input.attr('max') && (Number($input.val()) > Number($input.attr('max'))))	{
+								r = false;
+								$input.addClass('ui-state-error');
+								$input.after($span.text('max value of '+$input.attr('max')+'. '));
+								}
+							else	{
+//								app.u.dump(" -> everything appears to check out w/  "+$input.attr('name')+" number input.");
+								}
+							}
+						else	{
+							app.u.dump(" -> value is not a number");
+							r = false;
+							$input.addClass('ui-state-error');
+							$input.after($span.text('not a number. '));
+							}
+						}
+
+					else if ($input.attr('type') == 'email' && !app.u.isValidEmail($input.val()))	{
+						//only 'error' if field is required. otherwise, show warning
+// ** 201330 -> field was erroring if email was invalid even if field was not required.						
+						if($input.attr('required') == 'required')	{
+							r = false;
+							$input.addClass('ui-state-error');
+							}
+						else if($input.val())	{
+							$input.after($span.text('not a valid email address'));
+							removeClass($input);
+							}
+						else	{} //field is not required and blank.
+						}
+//* 201336 -> technically, maxlength isnt supported on a text area. so data-maxlength is used instead.
+					else if(($input.attr('maxlength') && $input.val().length > $input.attr('maxlength')) || ($input.attr('data-maxlength') && $input.val().length > $input.attr('data-maxlength')))	{
+						r = false;
+						$input.addClass('ui-state-error');
+						$input.after($span.text('allows a max of '+($input.attr('maxlength') || $input.attr('data-maxlength'))+' characters'));
+						removeClass($input);
+						}
+//** 201318 -> error was being reported incorrectly.
+					else if($input.data('minlength') && $input.val().length < $input.data('minlength'))	{
+						r = false;
+						$input.addClass('ui-state-error');
+						$input.after($span.text('requires a minimum of '+$input.data('minlength')+' characters'));
+						removeClass($input);
+						}
+// * 201320 -> now support 'min' attr which is the minimum numerical value (ex: 0 or 7) for the input value.
+//number input type has a native min for minimum value
+					else if($input.attr('min') && Number($input.val()) < Number($input.attr('min')))	{
+						r = false;
+						$input.addClass('ui-state-error');
+						$input.after($span.text('requires a minimum value of '+$input.attr('min')));
+						removeClass($input);
+						}
+// * 201320 -> now support 'min' attr which is the minimum numerical value (ex: 0 or 7) for the input value.
+//number input type has a native min for minimum value
+					else if($input.attr('max') && Number($input.val()) > Number($input.attr('max')))	{
+						r = false;
+						$input.addClass('ui-state-error');
+						$input.after($span.text('requires a maximum value of '+$input.attr('max')));
+						removeClass($input);
+						}
+//** 201318 -> moved this down so that the more specific error messages would be displayed earlier
+					else if($input.attr('required') == 'required' && !$input.val())	{
 						r = false;
 						$input.addClass('ui-state-error');
 						$input.after($span.text('required'));
 						removeClass($input);
 						}
-					else if ($input.attr('type') == 'email' && !app.u.isValidEmail($input.val()))	{
-						r = false;
-						$input.addClass('ui-state-error');
-						$input.after($span.text('not a valid email address'));
-						removeClass($input);
-						}
-					else if($input.attr('maxlength') && $input.val().length > $input.attr('maxlength'))	{
-						r = false;
-						$input.addClass('ui-state-error');
-						$input.after($span.text('requires a max of '+$input.attr('maxlength')+' characters'));
-						removeClass($input);
-						}
-					else if($input.data('minlength') && $input.val().length < $input.data('minlength'))	{
-						r = false;
-						$input.addClass('ui-state-error');
-						$input.after($span.text('requires a max of '+$input.attr('maxlength')+' characters'));
-						removeClass($input);
-						}
 					else	{
-						$input.removeClass('ui-state-error'); //removed in case added in previous validation attempt.
+						
 						}
+					
+					if($input.hasClass('ui-state-error'))	{
+						app.u.dump(" -> "+$input.attr('name')+" did not validate. ishidden: "+$input.is(':hidden'));
+						}
+					
 					});
+//app.u.dump(" -> radios:"); app.u.dump(radios);
+				if(!$.isEmptyObject(radios))	{
+//					app.u.dump(" -> radios is not empty");
+					var L = radios.length;
+					for(var index in radios)	{
+						if($("input:radio[name='"+index+"']:checked",$form).val())	{
+//							app.u.dump(" -> radio name='"+index+"' has a value selected");
+							} //is selected.
+						else	{
+							var message = "<div class='formValidationError clearfix marginTop marginBottom ui-state-error smallPadding ui-corner-all'>Please select one choice from the list below:<\/div>"
+							if($("input:radio[name='"+index+"']:first",$form).closest("[data-app-role='radioContainer']").length)	{
+								$("input:radio[name='"+index+"']:first",$form).closest("[data-app-role='radioContainer']").prepend(message)
+								}
+							else	{
+								$("input:radio[name='"+index+"']",$form).first().closest('fieldset').prepend(message)
+								}
+							}
+						}
+					//check to see if the required radios have a value set. this list only contains radio input names that are required.
+					//if none are selected. add ui-state-error to each radio input of that name.
+					}
 				$form.hideLoading();
 				}
 			else	{
@@ -1716,8 +2191,14 @@ VALIDATION
 					//browser doesn't support writing object to console. probably IE8.
 					console.log('object output not supported');
 					}
-				else
+				else if(type == 'greet')	{
+					console.log("%c\n\n"+msg+"\n\n",'color: purple; font-weight: bold;')
+					}
+				else if(console[type])	{
 					console[type](msg);
+					}
+				else	{} //hhhhmm... unsupported type.
+					
 				}
 			}, //dump
 
@@ -1787,9 +2268,9 @@ tag = boolean. Set to true to output the <img tag. set to false or blank to just
 app.u.makeImage({"name":"","w":150,"h":150,"b":"FFFFFF","class":"prodThumb","tag":1});
 */
 		makeImage : function(a)	{
-		//	app.u.dump('W = '+a.w+' and H = '+a.h);
-
-			a.lib = app.u.isSet(a.lib) ? a.lib : app.vars.username;  //determine protocol
+//			app.u.dump(a);
+// ** 201318 -> other libs are no longer supported. forced to username
+//			a.lib = app.u.isSet(a.lib) ? a.lib : app.vars.username;  //determine protocol
 			a.m = a.m ? 'M' : '';  //default to minimal mode off. If anything true value (not 0, false etc) is passed in as m, minimal is turned on.
 //			app.u.dump(' -> library: '+a.lib+' and name: '+a.name);
 			if(a.name == null) { a.name = 'i/imagenotfound'; }
@@ -1797,17 +2278,35 @@ app.u.makeImage({"name":"","w":150,"h":150,"b":"FFFFFF","class":"prodThumb","tag
 			var url, tag;
 			// alert(a.lib);		// uncomment then go into media library for some really wonky behavior 
 		
-		//default height and width to blank. setting it to zero or NaN is bad for IE.
+				//default height and width to blank. setting it to zero or NaN is bad for IE.
+// *** 201338 Added better handling for when no parameters are set, as well as a bug fix where a necessary '-' character was being removed
+// from a valid use case. -mc
 			if(a.h == null || a.h == 'undefined' || a.h == 0)
 				a.h = '';
 			if(a.w == null || a.w == 'undefined' || a.w == 0)
 				a.w = '';
-			
-			url = location.protocol === 'https:' ? 'https:' : 'http:';  //determine protocol
-			url += '\/\/static.zoovy.com\/img\/'+a.lib+'\/';
-		
-			if((a.w == '') && (a.h == ''))
+			if(a.b == null || a.b == 'undefined')
+				a.b = '';
+// *** 201318 -> new url for media library.			
+//			url = location.protocol === 'https:' ? 'https:' : 'http:';  //determine protocol
+//			url += '\/\/static.zoovy.com\/img\/'+a.lib+'\/';
+//In an admin session, the config.js isn't loaded. The secure domain is set as a global var when a domain is selected or can be retrieved from adminDomainList
+			if(app.vars.thisSessionIsAdmin)	{
+				url = 'https:\/\/'+(app.vars.https_domain || app.data['adminDomainList']['media-host']);
+				//make sure domain ends in a /
+				if(url.charAt(url.length) != '/')	{
+					url+="\/"
+					}
+				url += "media\/img\/"+app.vars.username+"\/";
+				}
+			else	{
+				url = location.protocol === 'https:' ? zGlobals.appSettings.https_app_url : zGlobals.appSettings.http_app_url;
+				url += "media\/img\/"+app.vars.username+"\/";
+				}
+				
+			if(!a.w && !a.h && !a.b && !a.m){
 				url += '-';
+				}
 			else	{
 				if(a.w)	{
 					url += 'W'+a.w+'-';
@@ -1819,19 +2318,30 @@ app.u.makeImage({"name":"","w":150,"h":150,"b":"FFFFFF","class":"prodThumb","tag
 					url += 'B'+a.b+'-';
 					}
 				url += a.m;
-				}
-			if(url.charAt(url.length-1) == '-')	{
-				url = url.slice(0,url.length-1); //strip trailing - because it isn't stricly 'compliant' with media lib specs.
+// *** 201338 Moved up into the else statement so that the valid case of no parameters produces the expected URL containing "/-/" instead of "//" -mc
+				if(url.charAt(url.length-1) == '-')	{
+					url = url.slice(0,url.length-1); //strip trailing - because it isn't stricly 'compliant' with media lib specs.
+					}
 				}
 			url += '\/'+a.name;
-		
-		//		app.u.dump(url);
+
+//			app.u.dump(" -> URL: "+url);
 			
 			if(a.tag == true)	{
 				a['class'] = typeof a['class'] == 'string' ? a['class'] : ''; //default class to blank
 				a['id'] = typeof a['id'] == 'string' ? a['id'] : 'img_'+a.name; // default id to filename (more or less)
 				a['alt'] = typeof a['alt'] == 'string' ? a['alt'] : a.name; //default alt text to filename
-				var tag = "<img src='"+url+"' alt='"+a.alt+"' id='"+a['id']+"' class='"+a['class']+"' \/>";
+// ** 201318 if width and height are present, they are added to the tag.  This solves an issue that occurs in loading
+//	pic sliders where the width of the images, and thus the scroll amount, is not calculated correctly the first time
+//	the slider loads
+				var tag = "<img src='"+url+"' alt='"+a.alt+"' id='"+a['id']+"' class='"+a['class']+"'"
+				if(a.w){
+					tag+=" width='"+a.w+"'";
+				}
+				if(a.h){
+					tag+=" height='"+a.h+"'";
+				}
+				tag += " \/>";
 				return tag;
 				}
 			else	{
@@ -2045,7 +2555,42 @@ for now, all it does is save the facebook user data as needed, if the user is au
 later, it will handle other third party plugins as well.
 */
 		handleThirdPartyInits : function()	{
-//			app.u.dump("BEGIN app.u.handleThirdPartyInits");
+			app.u.dump("BEGIN app.u.handleThirdPartyInits");
+
+			var uriParams = app.u.kvp2Array(location.hash.substring(1));
+			//landing on the admin app, having been redirected after logging in to google.
+			if(uriParams.trigger == 'googleAuth')	{
+				app.calls.authAdminLogin.init({
+					'authtype' : 'google:id_token',
+					'id_token' : uriParams.id_token
+					},{'datapointer' : 'authAdminLogin','callback':'showHeader','extension':'admin'},'immutable');
+				app.model.dispatchThis('immutable');
+				}
+			//just returned from google
+			else if(uriParams.id_token && uriParams.state)	{
+
+				if(uriParams.state)	{
+					
+					app.u.dump(" -> state was defined as a uri param");
+					var state = jQuery.parseJSON(atob(uriParams.state));
+					app.u.dump(" -> post decode/parse state:");	app.u.dump(state);
+//to keep the DOM as clean as possible, only declare this function if it's needed.					
+					if(state.onReturn == 'return2Domain')	{
+						window.return2Domain = function(s,uP){
+							document.location = s.domain+"#trigger=googleAuth&access_token="+uP.access_token+"&id_token="+uP.id_token
+							}
+						}
+					
+					if(state.onReturn && typeof window[state.onReturn] == 'function')	{
+						window[state.onReturn](state,uriParams);
+						}
+					else	{
+						app.u.dump(" -> state was defined but either onReturn ["+state.onReturn+"] was not set or not a function [typeof: "+typeof window[state.onReturn]+"].");
+						}
+					}
+
+				}
+
 //initial init of fb app.
 			if(typeof zGlobals !== 'undefined' && zGlobals.thirdParty.facebook.appId && typeof FB !== 'undefined')	{
 //				app.u.dump(" -> facebook appid set. load user data.");
@@ -2084,90 +2629,106 @@ later, it will handle other third party plugins as well.
 // ### NOTE! SANITY ! WHATEVER - app.ext.convertSessionToOrder.vars is referenced below. When this is removed, make sure to update checkouts to add an onChange event to update the app.ext.convertSessionToOrder.vars object because otherwise the CC number won't be in memory and possibly won't get sent as part of calls.cartOrderCreate.
 
 		getSupplementalPaymentInputs : function(paymentID,data,isAdmin)	{
-			app.u.dump(" -> USING OLD VERSION of getSupplementalPaymentInputs. CHANGE TO NEW in cco");
-			//NOTE -> this function wasn't just deleted because extensive testing needs to occur to the checkouts/UI and I'm still in dev on the new version of the function.
-//				app.u.dump("BEGIN control.u.getSupplementalPaymentInputs ["+paymentID+"]");
-//				app.u.dump(" -> data:"); app.u.dump(data);
 			var $o; //what is returned. a jquery object (ul) w/ list item for each input of any supplemental data.
-			$o = $("<ul />").attr("id","paybySupplemental_"+paymentID).addClass("paybySupplemental");
-			var safeid = ''; //used in echeck loop. recycled in loop.
-			var tmp = ''; //tmp var used to put together string of html to append to $o
-			
-			var payStatusCB = "<li><label><input type='checkbox' name='flagAsPaid' \/>Flag as paid<\/label><\/li>"
-			
-			
-			switch(paymentID)	{
-//for credit cards, we can't store the # or cid in local storage. Save it in memory so it is discarded on close, reload, etc
-//expiration is less of a concern
-				case 'PAYPALEC' :
-				//paypal supplemental is used for some messaging (select another method or change due to error). leave this here.
-					break;
-				case 'CREDIT':
-					tmp += "<li><label for='payment-cc'>Credit Card #<\/label><input type='text' size='20' name='payment/CC' id='payment-cc' class=' creditCard' value='";
-					if(data['payment/CC']){tmp += data['payment/CC']}
-					tmp += "' onKeyPress='return app.u.numbersOnly(event);' /><\/li>";
+			if(paymentID)	{
+				app.u.dump(" -> USING OLD VERSION of getSupplementalPaymentInputs. CHANGE TO NEW in cco");
+				//NOTE -> this function wasn't just deleted because extensive testing needs to occur to the checkouts/UI and I'm still in dev on the new version of the function.
+	//				app.u.dump("BEGIN control.u.getSupplementalPaymentInputs ["+paymentID+"]");
+	//				app.u.dump(" -> data:"); app.u.dump(data);
+				
+				$o = $("<ul />").attr("id","paybySupplemental_"+paymentID).addClass("paybySupplemental");
+				var safeid = ''; //used in echeck loop. recycled in loop.
+				var tmp = ''; //tmp var used to put together string of html to append to $o
+				
+				var payStatusCB = "<li><label><input type='checkbox' name='flagAsPaid' \/>Flag as paid<\/label><\/li>"
+				
+	//			app.u.dump(" -> paymentID.substr(0,6): "+paymentID.substr(0,7));
+				if(paymentID.substr(0,7) == 'WALLET:')	{
+					paymentID = 'WALLET';
+					}			
+				app.u.dump(" -> PAYMENTID: "+paymentID);
+				switch(paymentID)	{
+	//for credit cards, we can't store the # or cid in local storage. Save it in memory so it is discarded on close, reload, etc
+	//expiration is less of a concern
+					case 'PAYPALEC' :
 					
-					tmp += "<li><label>Expiration<\/label><select name='payment/MM' id='payment-mm' class='creditCardMonthExp' required='required'><option><\/option>";
-					tmp += app.u.getCCExpMonths(data['payment/MM']);
-					tmp += "<\/select>";
-					tmp += "<select name='payment/YY' id='payment-yy' class='creditCardYearExp'  required='required'><option value=''><\/option>"+app.u.getCCExpYears(data['payment/YY'])+"<\/select><\/li>";
-					
-					tmp += "<li><label for='payment/CV'>CVV/CID<\/label><input type='text' size='4' name='payment/CV' id='payment-cv' class=' creditCardCVV' onKeyPress='return app.u.numbersOnly(event);' value='";
-					if(data['payment/CV']){tmp += data['payment/CV']}
-					tmp += "'  required='required' /> <span class='ui-icon ui-icon-help' onClick=\"$('#cvvcidHelp').dialog({'modal':true,height:400,width:550});\"></span><\/li>";
-					
-					if(isAdmin === true)	{
-						tmp += "<li><label><input type='radio' name='VERB' value='AUTHORIZE'>Authorize<\/label><\/li>"
-						tmp += "<li><label><input type='radio' name='VERB' value='CHARGE'>Charge<\/label><\/li>"
-						tmp += "<li><label><input type='radio' name='VERB' value='REFUND'>Refund<\/label><\/li>"
-						}
-					
-					
-					break;
-
-					case 'CASH':
-					case 'MO':
-					case 'CHECK':
-					case 'PICKUP':
-//will output a flag as paid checkbox ONLY in the admin interface.
-//if this param is passed in a store, it will do nothing.
-					if(isAdmin === true)	{
-						tmp += payStatusCB;
-						}
-					break;
-
-				case 'PO':
-					tmp += "<li><label for='payment-po'>PO #<\/label><input type='text' size='10' name='payment/PO' id='payment-po' class=' purchaseOrder' onChange='app.calls.cartSet.init({\"payment/PO\":this.value});' value='";
-					if(data['payment/PO'])
-							tmp += data['payment/PO'];
-					tmp += "' /><\/li>";
-					if(isAdmin === true)	{
-						tmp += payStatusCB;
-						}
-					break;
-
-				case 'ECHECK':
-					var echeckFields = {"payment/EA" : "Account #","payment/ER" : "Routing #","payment/EN" : "Account Name","payment/EB" : "Bank Name","payment/ES" : "Bank State","payment/EI" : "Check #"}
-					for(var key in echeckFields) {
-						safeid = app.u.makeSafeHTMLId(key);
-//the info below is added to the pdq but not immediately dispatched because it is low priority. this could be changed if needed.
-//The field is required in checkout. if it needs to be optional elsewhere, remove the required attribute in that code base after this has rendered.
-						tmp += "<li><label for='"+safeid+"'>"+echeckFields[key]+"<\/label><input type='text' size='2' name='"+key+"' id='"+safeid+"' class=' echeck'  value='";
-//if the value for this field is set in the data object (cart or invoice), set it here.
-						if(data[key])
-							tmp += data[key];
+					//paypal supplemental is used for some messaging (select another method or change due to error). leave this here.
+						break;
+					case 'CREDIT':
+						tmp += "<li><label for='payment-cc'>Credit Card #<\/label><input type='text' size='20' name='payment/CC' id='payment-cc' class=' creditCard' value='";
+						if(data['payment/CC']){tmp += data['payment/CC']}
+						tmp += "' onKeyPress='return app.u.numbersOnly(event);' /><\/li>";
+						
+						tmp += "<li><label>Expiration<\/label><select name='payment/MM' id='payment-mm' class='creditCardMonthExp' required='required'><option><\/option>";
+						tmp += app.u.getCCExpMonths(data['payment/MM']);
+						tmp += "<\/select>";
+						tmp += "<select name='payment/YY' id='payment-yy' class='creditCardYearExp'  required='required'><option value=''><\/option>"+app.u.getCCExpYears(data['payment/YY'])+"<\/select><\/li>";
+						
+						tmp += "<li><label for='payment/CV'>CVV/CID<\/label><input type='text' size='4' name='payment/CV' id='payment-cv' class=' creditCardCVV' onKeyPress='return app.u.numbersOnly(event);' value='";
+						if(data['payment/CV']){tmp += data['payment/CV']}
+						tmp += "'  required='required' /> <span class='ui-icon ui-icon-help' onClick=\"$('#cvvcidHelp').dialog({'modal':true,height:400,width:550});\"></span><\/li>";
+						
+						if(isAdmin === true)	{
+							tmp += "<li><label><input type='radio' name='VERB' value='AUTHORIZE'>Authorize<\/label><\/li>"
+							tmp += "<li><label><input type='radio' name='VERB' value='CHARGE'>Charge<\/label><\/li>"
+							tmp += "<li class='hint'>Use refund action in transaction history to issue refund.<\/li>"
+							}
+						
+						
+						break;
+	
+						case 'WALLET':
+							if(isAdmin === true)	{
+								tmp += "<div><label><input type='radio' name='VERB' value='AUTHORIZE'>Authorize<\/label><\/div>"
+								tmp += "<div><label><input type='radio' name='VERB' value='CHARGE' checked='checked'>Charge<\/label><\/div>"
+								}
+							else	{$o = false;} //inputs are only present in admin interface.
+						break;
+						
+						case 'CASH':
+						case 'MO':
+						case 'CHECK':
+						case 'PICKUP':
+	//will output a flag as paid checkbox ONLY in the admin interface.
+	//if this param is passed in a store, it will do nothing.
+						if(isAdmin === true)	{
+							tmp += payStatusCB;
+							}
+						break;
+	
+					case 'PO':
+						tmp += "<li><label for='payment-po'>PO #<\/label><input type='text' size='10' name='payment/PO' id='payment-po' class=' purchaseOrder' value='";
+						if(data['payment/PO'])
+								tmp += data['payment/PO'];
 						tmp += "' /><\/li>";
-						}
-					break;
-				default:
-//if no supplemental material is present, return false. That'll make it easy for any code executing this to know if there is additional inputs or not.
-					$o = false; //return false if there is no supplemental fields
+						if(isAdmin === true)	{
+							tmp += payStatusCB;
+							}
+						break;
+	
+					case 'ECHECK':
+						var echeckFields = {"payment/EA" : "Account #","payment/ER" : "Routing #","payment/EN" : "Account Name","payment/EB" : "Bank Name","payment/ES" : "Bank State","payment/EI" : "Check #"}
+						for(var key in echeckFields) {
+							safeid = app.u.makeSafeHTMLId(key);
+	//the info below is added to the pdq but not immediately dispatched because it is low priority. this could be changed if needed.
+	//The field is required in checkout. if it needs to be optional elsewhere, remove the required attribute in that code base after this has rendered.
+							tmp += "<li><label for='"+safeid+"'>"+echeckFields[key]+"<\/label><input type='text' size='2' name='"+key+"' id='"+safeid+"' class=' echeck'  value='";
+	//if the value for this field is set in the data object (cart or invoice), set it here.
+							if(data[key])
+								tmp += data[key];
+							tmp += "' /><\/li>";
+							}
+						break;
+					default:
+	//if no supplemental material is present, return false. That'll make it easy for any code executing this to know if there is additional inputs or not.
+						$o = false; //return false if there is no supplemental fields
+					}
+				if($o != false)	{$o.append(tmp)} //put the li contents into the ul for return.
 				}
-			if($o != false)	{$o.append(tmp)} //put the li contents into the ul for return.
 			return $o;
 //				app.u.dump(" -> $o:");
 //				app.u.dump($o);
-		}
+			}
 
 		}, //util
 
@@ -2232,32 +2793,44 @@ Then we'll be in a better place to use data() instead of attr().
 //				app.u.dump(eleAttr);
 				}
 			else	{
+//				app.u.dump(" -> transmogrify has everything it needs.");
 //we have everything we need. proceed.
 
 var $r = app.templates[templateID].clone(); //clone is always used so original is 'clean' each time it's used. This is what is returned.
+//app.u.dump(" -> template cloned");
 $r.attr('data-templateid',templateID); //note what templateID was used. handy for troubleshooting or, at some point, possibly re-rendering template
 if(app.u.isSet(eleAttr) && typeof eleAttr == 'string')	{
 //	app.u.dump(' -> eleAttr is a string.');
-	$r.attr('id',app.u.makeSafeHTMLId(eleAttr))  
+	$r.attr('id',app.u.makeSafeHTMLId(eleAttr)) 
 	}
+//NOTE - eventually, we want to get rid of this check and just use the .data at the bottom.
 else if(typeof eleAttr == 'object')	{
 //	app.u.dump(' -> eleAttr is an object.');
-//NOTE - eventually, we want to get rid of this check and just use the .data at the bottom.
-	for(var index in eleAttr)	{
-		if(typeof eleAttr[index] == 'object')	{
-			//can't output an object as a string. later, if/when data() is used, this may be supported.
-			}
-		else if(index.match("^[a-zA-Z0-9_\-]*$"))	{
-			$r.attr('data-'+index,eleAttr[index]) //for now, this is being added via attr data-. later, it may use data( but I want it in the DOM for now.
-			}
-		else	{
-			//can't have non-alphanumeric characters in 
-			}
+// applying an empty object as .data caused a JS error in IE8
+	if($.isEmptyObject(eleAttr))	{
+//		app.u.dump(" -> eleAttr is empty");
 		}
-	$r.data(eleAttr);
-	if(eleAttr.id)	{$r.attr('id',app.u.makeSafeHTMLId(eleAttr.id))} //override the id with a safe id, if set.
+	else	{
+//		app.u.dump(" -> eleAttr is NOT empty");
+		for(var index in eleAttr)	{
+			if(typeof eleAttr[index] == 'object')	{
+				//can't output an object as a string. later, if/when data() is used, this may be supported.
+				}
+			else if(index.match("^[a-zA-Z0-9_\-]*$"))	{
+				$r.attr('data-'+index,eleAttr[index]) //for now, this is being added via attr data-. later, it may use data( but I want it in the DOM for now.
+				}
+			else	{
+				//can't have non-alphanumeric characters in 
+				}
+			}
+		$r.data(eleAttr);
+		}
+// * 201324 -> absence of eleAttr check caused JS error
+// ** 201324 -> attempting to get rid of this makeSafe function. jqSelector on the selector side should handle these.
+//	if(eleAttr && eleAttr.id)	{$r.attr('id',app.u.makeSafeHTMLId(eleAttr.id))} //override the id with a safe id, if set.
+	if(eleAttr && eleAttr.id)	{$r.attr('id',eleAttr.id)} //override the id with a safe id, if set.
 	}
-//app.u.dump("GOT HERE");
+//app.u.dump(" -> got through transmogrify. now move on to handle translation and return it.");
 return this.handleTranslation($r,data);
 
 
@@ -2287,7 +2860,6 @@ most likely, this will be expanded to support setting other data- attributes. ##
 				
 			if(templateID && app.templates[templateID])	{
 				r = app.templates[templateID].clone();
-				
 				if(typeof eleAttr == 'string')	{r.attr('id',app.u.makeSafeHTMLId(eleAttr))}
 				else if(typeof eleAttr == 'object')	{
 //an attibute will be set for each. {data-pid:PID} would output data-pid='PID'
@@ -2347,6 +2919,7 @@ $r.find('[data-bind]').addBack('[data-bind]').each(function()	{
 			if(bindData['var'])	{
 				value = app.renderFunctions.getAttributeValue(bindData['var'],data);  //set value to the actual value
 				}
+
 			if(!app.u.isSet(value) && bindData.defaultVar)	{
 				value = app.renderFunctions.getAttributeValue(bindData['defaultVar'],data);
 	//					app.u.dump(' -> used defaultVar because var had no value. new value = '+value);
@@ -2356,9 +2929,10 @@ $r.find('[data-bind]').addBack('[data-bind]').each(function()	{
 //				app.u.dump(' -> used defaultValue ("'+bindData.defaultValue+'") because var had no value.');
 				}
 			}
-		
-		
 		}
+
+
+
 	if(bindData.hideZero == 'false') {bindData.hideZero = false} //passed as string. treat as boolean.
 	else	{bindData.hideZero = true}
 // SANITY - value should be set by here. If not, likely this is a null value or isn't properly formatted.
@@ -2385,7 +2959,8 @@ $r.find('[data-bind]').addBack('[data-bind]').each(function()	{
 			}
 		
 		}
-	else if(value || (Number(value) == 0 && bindData.hideZero === false))	{
+// ** 201342 -> added forceRender. if true, will always execute the render format, regardless of whether a value is set on the attribute.
+	else if(value || (Number(value) == 0 && bindData.hideZero === false) || bindData.forceRender)	{
 		if(app.u.isSet(bindData.className)){$focusTag.addClass(bindData.className)} //css class added if the field is populated. If the class should always be there, add it to the template.
 
 		if(app.u.isSet(bindData.format)){
@@ -2538,6 +3113,13 @@ return $r;
 
 
 	renderFormats : {
+		imageURL2Href : function($tag,data)	{
+			data.bindData.name = (data.bindData.valuePretext) ? data.bindData.valuePretext+data.value : data.value;
+			data.bindData.w = $tag.attr('width');
+			data.bindData.h = $tag.attr('height');
+			data.bindData.tag = 0;
+			$tag.attr('href',app.u.makeImage(data.bindData)); //passing in bindData allows for using
+			},
 
 		imageURL : function($tag,data){
 //			app.u.dump('got into displayFunctions.image: "'+data.value+'"');
@@ -2559,6 +3141,7 @@ return $r;
 //				$tag.css('display','none'); //if there is no image, hide the src. 
 				}
 			}, //imageURL
+		
 
 		stuffList : function($tag,data)	{
 //			app.u.dump("BEGIN renderFormat.stuffList");
@@ -2571,8 +3154,8 @@ return $r;
 				stid = data.value[i].stid;
 //				app.u.dump(" -> STID: "+stid);
 				$o = app.renderFunctions.transmogrify({'id':parentID+'_'+stid,'stid':stid},templateID,data.value[i])
-//make any inputs for coupons disabled.
-				if(stid[0] == '%')	{$o.find(':input').attr({'disabled':'disabled'}).addClass('disabled')}
+//make any inputs for coupons disabled. it is possible for stid to not be set, such as a fake product in admin_ordercreate unstructured add.
+				if(stid && stid[0] == '%')	{$o.find(':input').attr({'disabled':'disabled'}).addClass('disabled')}
 				$tag.append($o);
 				}
 			}, //stuffList
@@ -2580,9 +3163,16 @@ return $r;
 //handy for enabling tabs and whatnot based on whether or not a field is populated.
 //doesn't actually do anything with the value.
 		showIfSet : function($tag,data)	{
+//			app.u.dump(" -> showIfSet: "+data.value);
 			if(data.value)	{
 				$tag.show().css('display','block'); //IE isn't responding to the 'show', so the display:block is added as well.
 				}
+			},
+
+		showIfMatch : function($tag,data)	{
+//			app.u.dump("BEGIN renderFormat.showIfMatch. \n value: "+data.value+"\n matchValue: "+data.bindData.matchValue);
+			if(data.value == data.bindData.matchValue)	{$tag.show()}
+			else {} //can't count on getting here. value could be blank. hide by default, then let this show if it's a match.
 			},
 
 //handy for enabling tabs and whatnot based on whether or not a field is populated.
@@ -2591,6 +3181,17 @@ return $r;
 			if(data.value)	{
 				$tag.hide(); //IE isn't responding to the 'show', so the display:block is added as well.
 				}
+			},
+//EX:  data-bind='var: (@LIST);format:optionsFromList; text:pretty; value:safeid;'
+		optionsFromList : function($tag,data)	{
+//			app.u.dump("BEGIN renderFormats.optionsFromList.  data.value: "); app.u.dump(data.value);
+//			var L = data.value.length;
+			for(var index in data.value)	{
+				$("<option \/>").val((data.bindData.value) ? data.value[index][data.bindData.value] : data.value[index]).text((data.bindData.text) ? data.value[index][data.bindData.text] : data.value[index]).appendTo($tag);
+				}
+//			for(var i = 0; i < L; i += 1)	{
+//				$("<option \/>").val((data.bindData.value) ? data.value[i][data.bindData.value] : data.value[i]).text((data.bindData.text) ? data.value[i][data.bindData.text] : data.value[i]).appendTo($tag);
+//				}
 			},
 
 //for embedding. There is an action for showing a youtube video in an iframe in quickstart.
@@ -2608,8 +3209,23 @@ return $r;
 if(zGlobals.checkoutSettings.paypalCheckoutApiUser)	{
 	var payObj = app.u.which3PCAreAvailable();
 	if(payObj.paypalec)	{
-		$tag.empty().append("<img width='145' id='paypalECButton' height='42' border='0' src='"+(document.location.protocol === 'https:' ? 'https:' : 'http:')+"//www.paypal.com/en_US/i/btn/btn_xpressCheckoutsm.gif' alt='' />").addClass('pointer').one('click',function(){
-			app.ext.store_checkout.calls.cartPaypalSetExpressCheckout.init();
+		$tag.empty().append("<img width='145' id='paypalECButton' height='42' border='0' src='"+(document.location.protocol === 'https:' ? 'https:' : 'http:')+"//www.paypal.com/en_US/i/btn/btn_xpressCheckoutsm.gif' alt='' />").addClass('pointer').off('click.paypal').on('click.paypal',function(){
+			app.ext.cco.calls.cartPaypalSetExpressCheckout.init({'getBuyerAddress':1},{'callback':function(rd){
+				$('body').showLoading({'message':'Obtaining secure PayPal URL for transfer...','indicatorID':'paypalShowLoading'});
+				if(app.model.responseHasErrors(rd)){
+					$(this).removeClass('disabled').attr('disabled','').removeAttr('disabled');
+					$('#globalMessaging').anymessage({'message':rd});
+					}
+				else	{
+					if(app.data[rd.datapointer] && app.data[rd.datapointer].URL)	{
+						$('.ui-loading-message','#loading-indicator-paypalShowLoading').text("Transferring you to PayPal to authorize payment. See you soon!");
+						document.location = app.data[rd.datapointer].URL;
+						}
+					else	{
+						$('#globalMessaging').anymessage({"message":"In paypalECButton render format, dispatch to obtain paypal URL was successful, but no URL in the response.","gMessage":true});
+						}
+					}
+				}});
 			$(this).addClass('disabled').attr('disabled','disabled');
 			app.model.dispatchThis('immutable');
 			});
@@ -2625,11 +3241,11 @@ else	{
 
 		googleCheckoutButton : function($tag,data)	{
 
-if(zGlobals.checkoutSettings.googleCheckoutMerchantId)	{
+if(zGlobals.checkoutSettings.googleCheckoutMerchantId && (window._gat && window._gat._getTracker))	{
 	var payObj = app.u.which3PCAreAvailable(); //certain product can be flagged to disable googlecheckout as a payment option.
 	if(payObj.googlecheckout)	{
 	$tag.append("<img height=43 width=160 id='googleCheckoutButton' border=0 src='"+(document.location.protocol === 'https:' ? 'https:' : 'http:')+"//checkout.google.com/buttons/checkout.gif?merchant_id="+zGlobals.checkoutSettings.googleCheckoutMerchantId+"&w=160&h=43&style=trans&variant=text&loc=en_US' \/>").one('click',function(){
-		app.ext.store_checkout.calls.cartGoogleCheckoutURL.init();
+		app.ext.cco.calls.cartGoogleCheckoutURL.init();
 		$(this).addClass('disabled').attr('disabled','disabled');
 		app.model.dispatchThis('immutable');
 		});
@@ -2637,6 +3253,9 @@ if(zGlobals.checkoutSettings.googleCheckoutMerchantId)	{
 	else	{
 		$tag.append("<img height=43 width=160 id='googleCheckoutButton' border=0 src='"+(document.location.protocol === 'https:' ? 'https:' : 'http:')+"://checkout.google.com/buttons/checkout.gif?merchant_id="+zGlobals.checkoutSettings.googleCheckoutMerchantId+"&w=160&h=43&style=trans&variant=disable&loc=en_US' \/>")			
 		}
+	}
+else if(zGlobals.checkoutSettings.googleCheckoutMerchantId)	{
+	app.u.dump("zGlobals.checkoutSettings.googleCheckoutMerchantId is set, but _gaq is not defined (google analytics not loaded but required)",'warn');
 	}
 else	{
 	$tag.addClass('displayNone');
@@ -2672,9 +3291,11 @@ else	{
 			for(var i = 0; i < L; i += 1)	{
 //				app.u.dump("whitelist[i]: "+whitelist[i]+" and tagsDisplayed: "+tagsDisplayed+" and maxTagsShown: "+maxTagsShown);
 //				app.u.dump("data.value.indexOf(whitelist[i]): "+data.value.indexOf(whitelist[i]));
+// ** 201332 NOTE: data.value is assumed to be a String, a comma separated list of values.  If it were an array, we would
+//				need to use $.inArray instead of indexOf for IE8 compatibility
 				if(data.value.indexOf(whitelist[i]) >= 0 && (tagsDisplayed <= maxTagsShown))	{
 
-					spans += "<span class='"+whitelist[i].toLowerCase()+"'><\/span>";
+					spans += "<span class='tagSprite "+whitelist[i].toLowerCase()+"'><\/span>";
 					tagsDisplayed += 1;
 					}
 				}
@@ -2722,11 +3343,10 @@ $tmp.empty().remove();
 			},
 
 		epoch2pretty : function($tag,data)	{
-			var myDate = new Date( data.value*1000),
-			minutes = (myDate.getMinutes().length == 1 || myDate.getMinutes() == 0)  ? "0" + myDate.getMinutes() : myDate.getMinutes(); //JS stripping the 0 for 06
-//			app.u.dump(" -> myDate.getMinutes(): "+myDate.getMinutes()+" and minutes: "+minutes);
-			$tag.append(myDate.getFullYear()+"/"+(myDate.getMonth()+1)+"/"+myDate.getDate()+" "+myDate.getHours()+":"+minutes); //+":"+myDate.getSeconds() pulled seconds in 201307. really necessary?
+			var myDate = new Date( data.value*1000);
+			$tag.append(myDate.getFullYear()+"/"+((myDate.getMonth()+1) < 10 ? '0'+(myDate.getMonth()+1) : (myDate.getMonth()+1))+"/"+(myDate.getDate() < 10 ? '0'+myDate.getDate() : myDate.getDate())+" "+(myDate.getHours() < 10 ? '0'+myDate.getHours() : myDate.getHours())+":"+(myDate.getMinutes() < 10 ? '0'+myDate.getMinutes() : myDate.getMinutes())); //+":"+myDate.getSeconds() pulled seconds in 201307. really necessary?
 			},
+
 
 		unix2mdy : function($tag,data)	{
 			$tag.text(app.u.unix2Pretty(data.value,data.bindData.showtime))
@@ -2740,16 +3360,72 @@ $tmp.empty().remove();
 				}
 			$tag.html(o);
 			}, //text
-
-//for use on inputs. populates val() with the value
-		popVal : function($tag,data){
+//for use on radio buttons when the button is part of the template and the value of that button needs to be populated from a var (ex: checkout wallets)
+		setVal : function($tag,data)	{
 			$tag.val(data.value);
+			},
+
+//for use on inputs.
+//populates val() with the value
+// ** 201324 -> rather than having separate renderFormats for different input types, this can now be used for all.
+//				cb needs to use 'prop' not 'attr'. That is the right way to do it.
+		popVal : function($tag,data){
+			if($tag.is(':checkbox'))	{
+//				app.u.dump(" -> popVal, is checkbox. value: "+data.value+" and number: "+Number(data.value));
+				if(Number(data.value) === 0)	{
+					$tag.prop('checked',false); //have to handle unchecking in case checked=checked when template created.
+					}
+				else	{
+//the value here could be checked, on, 1 or some other string. if the value is set (and we won't get this far if it isn't), check the box.
+					$tag.prop('checked',true);
+					}
+				}
+			else if($tag.is(':radio'))	{
+//with radio's the value passed will only match one of the radios in that group, so compare the two and if a match, check it.
+				if($tag.val() == data.value)	{$tag.prop('checked','checked')}
+				}
+			else if($tag.is('select') && $tag.attr('multiple') == 'multiple')	{
+//				app.u.dump("GOT HERE!!!!!!!!!!!!!!!!");
+				if(typeof data.value === 'object')	{
+//					app.u.dump(" -> value is an object.");
+					var L = data.value.length;
+					for(var i = 0; i < L; i += 1)	{
+//						app.u.dump(" -> data.value[i]: "+data.value[i]);
+						$('option[value="' + data.value[i] + '"]',$tag).prop('selected','selected');
+						}
+					}
+				}
+			else	{
+//for all other inputs and selects, simply setting the value will suffice.
+				if($tag.data('stringify'))	{
+					$tag.val(JSON.stringify(data.value));
+					}
+				else	{
+					$tag.val(data.value);
+// *** 201344 -> added defaultVal prop.
+					$tag.prop('defaultValue',data.value); //allows for tracking the difference onblur.
+					}
+				}
+			
+			if($tag.data('trigger'))	{
+				if($tag.is('select'))	{}
+				else	{
+					$tag.trigger($tag.data('trigger'))
+					}
+				}
+			
 			}, //text
 
+// * 201318 -> allows for data-bind on a radio input.
+// *** 201324 -> retired in favor of a more versatile popVal.
+/*		popRadio : function($tag,data)	{
+			if($tag.val() == data.value)	{$tag.attr('checked','checked')}
+			},
+*/
 //only use this on fields where the value is boolean
 //if setting checked=checked by default, be sure to pass hideZero as false.
-		popCheckbox : function($tag,data){
-//			app.u.dump(" -> popCheckbox data.value: "+data.value);
+// *** 201324 -> retired in favor of a more versatile popVal.
+/*		popCheckbox : function($tag,data){
 			if(Number(data.value))	{$tag.attr('checked',true);}
 			else if(data.value === 'on')	{$tag.attr('checked',true);}
 			else if(data.value == true)	{$tag.attr('checked',true);}
@@ -2757,7 +3433,10 @@ $tmp.empty().remove();
 				$tag.attr('checked',false); //have to handle unchecking in case checked=checked when template created.
 				}
 			else{}
+			app.renderFormats.popVal($tag,data);
+
 			},
+*/
 
 //will allow an attribute to be set on the tag. attribute:data-stid;var: product(sku); would set data-stid='sku' on tag
 //pretext and posttext are added later in the process, but this function needed to be able to put some text before the output
@@ -2771,6 +3450,11 @@ $tmp.empty().remove();
 				o += app.u.makeSafeHTMLId(data.value);
 			else
 				o += data.value
+
+
+			if(data.bindData.valuePosttext)	{
+				o += data.bindData.valuePosttext;
+				}
 
 			$tag.attr(data.bindData.attribute,o);
 			}, //text
@@ -2804,6 +3488,29 @@ $tmp.empty().remove();
 				}
 			}, //money
 
+
+
+
+// ** 201324 -> used for displaying a new format for datastorage.
+//wikihash is the name of the datastorage format. looks like this:
+// key:value\nAnotherkey:AnotherValue\n
+// use 'key' and 'value' in the data-binds of the template.
+//pass template to apply per row as loadsTemplate: on the databind.
+//there's an example of this in admin_syndication (ebay category chooser)
+		wikiHash2Template : function($tag,data)	{
+			var
+				rows = data.value.split("\n"),
+				L = rows.length;
+			
+			for(var i = 0; i < L; i += 1)	{
+				var kvp = rows[i].split(/:(.+)?/);
+				$tag.append(app.renderFunctions.transmogrify({'key':kvp[0],'value':kvp[1]},data.bindData.loadsTemplate,{'key':kvp[0],'value':kvp[1]}));
+				}
+			
+			},
+
+
+
 //This should be used for all lists going forward that don't require special handling (such as stufflist, prodlist, etc).
 //everthing that's in the data lineitem gets passed as first param in transmogrify, which will add each key/value as data-key="value"
 //at this time, prodlist WON'T use this because each pid in the list needs/makes an API call.
@@ -2813,28 +3520,68 @@ $tmp.empty().remove();
 		processList : function($tag,data){
 //			app.u.dump("BEGIN renderFormats.processList");
 			$tag.removeClass('loadingBG');
-			if(data.bindData.loadsTemplate)	{
+// * 201324 -> added check for value to be object, as that's what process list is intended for.
+			if(data.bindData.loadsTemplate && typeof data.value === 'object')	{
 				var $o, //recycled. what gets added to $tag for each iteration.
 				int = 0;
-				for(i in data.value)	{
+				
+				var filter = data.bindData.filter;
+				var filterby = data.bindData.filterby;
+				if(!filterby)	{
+					if(filter)	{app.u.dump("In process list, a 'filter' was passed, but no filterby was specified, so the filter was ignored.\ndatabind: \n"+$tag.data('bind'),'warn');}
+					filter = undefined;
+					} //can't run a filter without a filterby. filter is keyed off of later.
+				
+//				app.u.dump(" -> data.value.length: "+data.value.length);
+				for(var i in data.value)	{
+// * 201336 -> mostly for use in admin. for processing the %sku object and subbing in the default attribs when there are no inventoryable variations.
+//if SKU is set, that means we're dealing with sku-level data.  if the sku does NOT have a :, we use the product %attribs
+					if(data.bindData.sku)	{
+						if(data.value[i] && data.value[i].sku && data.value[i].sku.indexOf(':') < 0)	{
+							data.value[i]['%attribs'] = (app.data['adminProductDetail|'+data.value[i].sku]) ? app.data['adminProductDetail|'+data.value[i].sku]['%attribs'] : {};
+							}
+						}
 					if(data.bindData.limit && int >= Number(data.bindData.limit)) {break;}
 					else	{
-						$o = app.renderFunctions.transmogrify(data.value[i],data.bindData.loadsTemplate,data.value[i]);
-						if(typeof $o == 'object')	{
-							if(data.value[i].id){} //if an id was set, do nothing.
-							else	{$o.attr('data-obj_index',i)} //set index for easy lookup later.
-							$tag.append($o);
+						//if no filter is declared, proceed. 
+						//This allows process list to only show matches
+						if(!filter || (filter && data.value[i][filter] == filterby))	{
+//if data.value was an associative array....
+// ** 201320 -> needed processList to support indexed arrays AND associative arrays.
+// ** 201324 -> added data.value check here. if val was null (which happened w/ bad data) then a JS error occured.
+							if(data.value[i] && typeof data.value[i] === 'object')	{
+	
+								if(!data.value[i].index && isNaN(i)) {data.value[i].index = i} //add an 'index' field to the data. handy for hashes (like in flexedit) where the index is something useful to have in the display.
+								$o = app.renderFunctions.transmogrify(data.value[i],data.bindData.loadsTemplate,data.value[i]);
+								if($o instanceof jQuery)	{
+									if(data.value[i].id){} //if an id was set, do nothing. there will error on an array (vs object)
+									else	{$o.attr('data-obj_index',i)} //set index for easy lookup later.
+									$tag.append($o);
+									}
+								else	{
+									//well that's not good.
+									app.u.dump("$o:"); app.u.dump($o);
+									}
+								}
+							else	{
+								$o = app.renderFunctions.transmogrify({'value':data.value[i],'key':i},data.bindData.loadsTemplate,{'value':data.value[i],'key':i});
+								$tag.append($o);
+								$o.attr('data-obj_index',i);
+	//							$tag.anymessage({'message':'Issue creating template using '+data.bindData.loadsTemplate,'persistent':true});
+								}
+							
 							}
 						else	{
-							$tag.anymessage({'message':'Issue creating template using '+data.bindData.loadsTemplate,'persistant':true});
+							//value does not match filter.
 							}
+						
 						}
 					int += 1;				
 					}
 				
 				}
 			else	{
-				$tag.anymessage({'message':'Unable to render list item - no loadsTemplate specified.','persistant':true});
+				$tag.anymessage({'message':'Unable to render list item - no loadsTemplate specified.','persistent':true});
 				}
 			}
 			
@@ -2846,13 +3593,15 @@ $tmp.empty().remove();
 
 ////////////////////////////////////   						STORAGEFUNCTIONS						    \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 					
-					
+// !!! at some point, these should get moved to the model. the model should handle loading data from any source.
+		
 	storageFunctions : {
-
-		writeLocal : function (key,value)	{
-		//	app.u.dump("WRITELOCAL: Key = "+key);
+//location should be set to 'session' or 'local'.
+		writeLocal : function (key,value,location)	{
+			location = location || 'local';
+//			app.u.dump("WRITELOCAL: Key = "+key+" and location: "+location);
 			var r = false;
-			if('localStorage' in window && window['localStorage'] !== null && typeof localStorage != 'undefined')	{
+			if(location+'Storage' in window && window[location+'Storage'] !== null && typeof window[location+'Storage'] != 'undefined')	{
 				r = true;
 				if (typeof value == "object") {
 					value = JSON.stringify(value);
@@ -2860,27 +3609,32 @@ $tmp.empty().remove();
 //				localStorage.removeItem(key); //here specifically to solve a iphone/ipad issue as a result of 'private' browsing.
 //the function above wreaked havoc in IE. do not implement without thorough testing (or not at all).
 				try	{
-					localStorage.setItem(key, value);
+					window[location+'Storage'].setItem(key, value);
 					}
 				catch(e)	{
 					r = false;
-//					app.u.dump(' -> localStorage defined but not available (no space? no write permissions?)');
-//					app.u.dump(e);
+					app.u.dump(' -> '+location+'Storage defined but not available (no space? no write permissions?)');
+					app.u.dump(e.message);
 					}
 				
+				}
+			else	{
+				app.u.dump(" -> window[location+'Storage']: "+window[location+'Storage']);
+				app.u.dump(" -> window."+location+"Storage is not defined.");
 				}
 			return r;
 			}, //writeLocal
 		
-		readLocal : function(key)	{
+		readLocal : function(key,location)	{
+			location = location || 'local';
 		//	app.u.dump("GETLOCAL: key = "+key);
-			if(typeof localStorage == 'undefined')	{
+			if(typeof window[location+'Storage'] == 'undefined')	{
 				return app.storageFunctions.readCookie(key); //return blank if no cookie exists. needed because getLocal is used to set vars in some if statements and 'null'	
 				}
 			else	{
 				var value = null;
 				try{
-					value = localStorage.getItem(key);
+					value = window[location+'Storage'].getItem(key);
 					}
 				catch(e)	{
 					//app.u.dump("Local storage does not appear to be available. e = ");
@@ -2935,7 +3689,7 @@ app.u.dump(" -> DELETED cookie "+c_name);
 
 
 	thirdParty : {
-		
+// !!! this should get moved out of here and either into a FB extension or quickstart.		
 		fb : {
 			
 			postToWall : function(msg)	{

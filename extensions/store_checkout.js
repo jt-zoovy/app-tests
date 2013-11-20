@@ -299,7 +299,7 @@ _gaq.push(['_trackEvent','Checkout','App Event','Attempting to create order']);
 /*
 Parameters included are as follows:
 P.orderID
-P.sessionID (this would be the sessionID associated w/ the order, not the newly generated session/cart id - reset immediately after checkout )
+P.cartID (this would be the cartID associated w/ the order, not the newly generated cart id - reset immediately after checkout )
 P.datapointer - pointer to cartOrderCreate
 
 note - the order object is available at app.data['order|'+P.orderID]
@@ -341,7 +341,8 @@ note - the order object is available at app.data['order|'+P.orderID]
 			
 			PO : function(vars)	{
 				var errors = new Array(); // what is returned. an array of the payment fields that are not correct. 
-				if(vars.PO){} else	{errors.push("PO")}
+				if(vars['payment/PO']){}
+				else	{errors.push("payment/PO")}
 				return (errors.length) ? errors : false;
 				}
 			
@@ -903,9 +904,7 @@ note - dispatch isn't IN the function to give more control to developer. (you ma
 			orderStatusLink : function($tag,data)	{
 //				app.u.dump('BEGIN app.ext.convertSessionToOrder.renderFormats.orderStatusLink');
 				var orderCartID = app.data['order|'+data.value].cart.cartid;
-//				https://ssl.zoovy.com/s=sporks.zoovy.com/customer/order/status?cartid=SESSION&orderid=data.value
 				$tag.click(function(){window.location = zGlobals.appSettings.https_app_url+"customer/order/status?cartid="+orderCartID+"&orderid="+data.value,'orderStatus'});
-				
 				},
 
 //displays the shipping method followed by the cost.
