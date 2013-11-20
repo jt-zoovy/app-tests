@@ -243,7 +243,7 @@ It is run once, executed by the renderFormat.
 							if($container.data('masonry')){
 								$container.masonry('appended',prodTags[i][0]);
 //** 201346 -> This will handle the image resize, but just on this list item. That way the entire list (including items already rendered) aren't impacted.
-								app.ext.store_masonry.u.makeImageFromImgSrc($("[data-imgsrc]",$(prodTags[i][0])));
+								app.ext.store_masonry.u.makeImageFromImgSrc($(".masonImage",$(prodTags[i][0])));
 								}
 							}
 						}

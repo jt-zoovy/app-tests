@@ -167,7 +167,7 @@ var store_masonry = function() {
 			masonImageInit : function($context) {
 				$('.masonImage', $context).each(function() {
 					app.ext.store_masonry.u.makeImageFromImgSrc($(this));
-					//$(this).removeClass('catMasonImage');
+					$(this).removeClass('masonImage');
 				});
 			},
 			
