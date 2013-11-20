@@ -242,10 +242,11 @@ It is run once, executed by the renderFormat.
 							$container.append(prodTags[i][0]);
 							if($container.data('masonry')){
 								$container.masonry('appended',prodTags[i][0]);
+								app.ext.store_masonry.u.makeImageFromImgSrc($("[data-imgsrc]",$(prodTags[i][0])));
 								}
 							}
 						}
-					app.ext.store_masonry.u.masonImageInit($container);
+//					app.ext.store_masonry.u.masonImageInit($container);
 					app.ext.prodlist_infinite.u.handleScroll($container);
 					}
 				else{
