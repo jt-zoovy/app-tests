@@ -112,12 +112,21 @@ var store_masonry = function() {
 //utilities are typically functions that are exected by an event or action.
 //any functions that are recycled should be here.
 		u : {
+
+
+			rgb2hex : function(rgb) {
+				rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+				function hex(x) {
+					return ("0" + parseInt(x).toString(16)).slice(-2);
+				}
+				return hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
+			},
 		
 			//does what the name implies
 			runMasonry : function($context) {
-				app.u.dump("BEGIN store_masonry.u.runMasonry");
+//				app.u.dump("BEGIN store_masonry.u.runMasonry");
 				var $target = $('.masonList', $context);
-				app.u.dump(" -> $target.length: "+$target.length);
+//				app.u.dump(" -> $target.length: "+$target.length);
 				//initialize
 				setTimeout(function() {
 					var masonry = $target.masonry({
@@ -156,11 +165,12 @@ var store_masonry = function() {
 			makeImageFromImgSrc : function($tag, attempts){
 				attempts = attempts || 0;
 				if($tag.attr('data-imgsrc')){
+					app.u.dump(" -> $tag.closest('.anyMasonry').css('backgroundColor'): "+this.rgb2hex($tag.closest(".anyMasonry").css('backgroundColor')));
  					$tag.append(app.u.makeImage({
 						"name"	: $tag.data('imgsrc'),
 						"w"		: $tag.closest(".anyMasonry").innerWidth(), //use the parent element to get the image height and width. This works fine as long as the image SHOULD fill the entire element. if not, put a fixed height/width on the $tag and use that to generate the image dimensions.
 						"h"		: $tag.closest(".anyMasonry").innerHeight(),
-						"b"		: $tag.closest(".anyMasonry").css('background-color'),
+						"b"		: this.rgb2hex($tag.closest(".anyMasonry").css('backgroundColor')),
 						"tag"	: 1
 					}));
 				}
