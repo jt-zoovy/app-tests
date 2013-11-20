@@ -175,16 +175,17 @@ It is run once, executed by the renderFormat.
 						$tag.parent().anymessage({'message':rd});
 						}
 					else	{
+						var prodTags = []
 						for(var i = 0; i < L; i += 1)	{
 // *** 201330 Uses $placeholders and the new insertProduct function to simulate aynchronous callback and preserve product order
 // while inserting products.  Before, if more appProductGet's were sent than could fit into a single pipeline, if the pipelined
 // request that held the "ping" with the infiniteCallback returned before another, the app.data["appProductGet|"...] would return 
 // undefined and the callback would fail mid-append. 
-							var $placeholder = $('<span />');
-							$tag.append($placeholder);
-							app.ext.prodlist_infinite.u.insertProduct(pageCSV[i], plObj, $placeholder);
+							var tagTuple = [false,false];
+							prodTags.push(tagTuple);
+							app.ext.prodlist_infinite.u.insertProduct(pageCSV[i], plObj, tagTuple);
 							}
-						app.ext.prodlist_infinite.u.handleScroll($tag);
+						app.ext.prodlist_infinite.u.appendAllProducts($tag, prodTags);
 						}				
 					}
 
@@ -199,7 +200,7 @@ It is run once, executed by the renderFormat.
 				},
 // *** 201330  The new insertProduct function re-attempts the append a reasonable number of times
 // before failing with a warning to the console.
-			insertProduct : function(pid, plObj, $placeholder, attempts){
+			insertProduct : function(pid, plObj, tagTuple, attempts){
 				var data = app.data['appProductGet|'+pid];
 				attempts = attempts || 0;
 				if(data){
@@ -208,19 +209,53 @@ It is run once, executed by the renderFormat.
 						data['reviews']['@reviews'] = app.data['appReviewsList|'+pid]['@reviews']
 						}
 														//if you want this list inventory aware, do you check here and skip the append below.
-					$placeholder.before(app.renderFunctions.transmogrify({'pid':pid},plObj.loadsTemplate,data));
-					$placeholder.remove();
+					tagTuple[0] = app.renderFunctions.transmogrify({'pid':pid},plObj.loadsTemplate,data).get(0);
+					//app.u.dump(pid);
+					tagTuple[1] = true;
 					}
 				else if(attempts < 50){
 					setTimeout(function(){
-						app.ext.prodlist_infinite.u.insertProduct(pid, plObj, $placeholder, attempts+1);
+						app.ext.prodlist_infinite.u.insertProduct(pid, plObj, tagTuple, attempts+1);
 						}, 250);
 					}
 				else {
 					app.u.dump("-> prodlist_infinite FAILED TO INSERT PRODUCT: "+pid)
-					$placeholder.remove();
+					tagTuple[1] = true;
 					}
 				},
+			
+			appendAllProducts : function($container, prodTags){
+				var allProdsRendered = false;
+				var renderedCount = 0;
+				for(var i in prodTags){
+					if(!prodTags[i][1]){
+						break;
+						}
+					else {
+						renderedCount++;
+						}
+					}
+				if(renderedCount == prodTags.length){
+					app.u.dump("-> prodlist_infinite APPENDING "+prodTags.length+" ITEMS");
+					for(var i in prodTags){
+						if(prodTags[i][0]){
+							$container.append(prodTags[i][0]);
+							if($container.data('masonry')){
+								$container.masonry('appended',prodTags[i][0]);
+								}
+							}
+						}
+					app.ext.store_masonry.u.masonImageInit($container);
+					app.ext.prodlist_infinite.u.handleScroll($container);
+					}
+				else{
+					app.u.dump("-> prodlist_infinite REQUEUEING APPEND");
+					setTimeout(function(){
+						app.ext.prodlist_infinite.u.appendAllProducts($container,prodTags);
+						},500);
+					}
+				},
+			
 			handleScroll : function($tag)	{
 var plObj = $tag.data();
 if(plObj.prodlist.csv.length <= plObj.prodlist.items_per_page)	{$tag.parent().find("[data-app-role='infiniteProdlistLoadIndicator']").hide();} //do nothing. fewer than 1 page worth of items.
