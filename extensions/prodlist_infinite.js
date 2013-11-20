@@ -242,10 +242,12 @@ It is run once, executed by the renderFormat.
 							$container.append(prodTags[i][0]);
 							if($container.data('masonry')){
 								$container.masonry('appended',prodTags[i][0]);
+//** 201346 -> This will handle the image resize, but just on this list item. That way the entire list (including items already rendered) aren't impacted.
 								app.ext.store_masonry.u.makeImageFromImgSrc($("[data-imgsrc]",$(prodTags[i][0])));
 								}
 							}
 						}
+//** 201346 -> removed this line. It was causing duplicate images to get added.  see makeImageFromImgSrc function above.
 //					app.ext.store_masonry.u.masonImageInit($container);
 					app.ext.prodlist_infinite.u.handleScroll($container);
 					}
