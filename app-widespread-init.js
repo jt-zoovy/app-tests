@@ -1,7 +1,7 @@
 var app = app || {vars:{},u:{}}; //make sure app exists.
 app.rq = app.rq || []; //ensure array is defined. rq = resource queue.
 
-
+console.log(" -> init is loaded");
 /*
 app.rq.push(['extension',0,'orderCreate','extensions/checkout/extension.js']);
 
@@ -102,7 +102,7 @@ w/ the new prodImages renderFormat, this isn't necessary anymore.
 
 
 
-
+app.u.dump(" -> RQ is built");
 //sample of an onDeparts. executed any time a user leaves this page/template type.
 //app.rq.push(['templateFunction','homepageTemplate','onDeparts',function(P) {app.u.dump("just left the homepage")}]);
 /*
@@ -200,9 +200,10 @@ app.u.appInitComplete = function(P)	{
 
 
 
-
+console.log(" -> app utilities have been added");
 //don't execute script till both jquery AND the dom are ready.
 $(document).ready(function(){
+	app.u.dump(" -> DOM and jQuery are both loaded. handle the RQ now");
 	app.u.handleRQ(0)
 	});
 

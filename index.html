@@ -243,18 +243,11 @@ don't modify the 'data-templateid' unless you are changing template names and up
 
 	<ul class='breadcrumb clearfix noPadOrMargin fluidList' data-bind='var: category(id); format:breadcrumb; extension:store_navcats; loadsTemplate: breadcrumbTemplate;'></ul>
 
-	<img data-bind="var: category(%page.banner1); format: banner; editor: banner; height:250; width:750; extension: myRIA;" src='images/blank.gif' alt='' />
+	<ul data-bind="var: category(@subcategoryDetail); format: categoryList; extension: store_navcats; loadsTemplate: categoryListTemplate; detail:max;" class='listStyleNone fluidList clearfix noPadOrMargin categoryList marginBottom'></ul><!-- outputs a list of subcategories -->
 
-	<h2 data-bind="var: category(%page.header); format: text; editor: text;"></h2>
+	<ul data-bind="var: category(@products); format: productList; editor: finder; extension: store_prodlist; loadsTemplate: productListTemplateMasonry; withReviews:1; items_per_page: 25;" class='listStyleNone clearfix noPadOrMargin masonList'></ul><!-- outputs the product list -->
 
 	<p data-bind="var: category(%page.description); format:wiki; wikiFormats:myRIA; editor: textarea;"></p>
-
-	<ul data-bind="var: category(@subcategoryDetail); format: categoryList; extension: store_navcats; loadsTemplate: categoryListTemplate; detail:max;" class='listStyleNone fluidList clearfix noPadOrMargin categoryList'></ul><!-- outputs a list of subcategories -->
-
-	<ul data-bind="var: category(@products); format: productList; editor: finder; extension: store_prodlist; loadsTemplate: productListTemplateMasonry; withReviews:1; items_per_page: 25;" class='listStyleNone responsiveProdlist clearfix noPadOrMargin masonList'></ul><!-- outputs the product list -->
-
-	<p data-bind="var: category(%page.description2); format:wiki; wikiFormats:myRIA; editor: textarea;"></p>
-
 
 </div>
 
@@ -273,8 +266,8 @@ don't modify the 'data-templateid' unless you are changing template names and up
 <ul>
 <li id='categoryListTemplate'>
 	<div onClick="showContent('category',{'navcat':$(this).parent().attr('data-catsafeid')});" class='pointer'>
-		<div class='thumbContainer'><img src='blank.gif' class='catThumb' alt='' data-bind='var: category(%meta.CAT_THUMB); format:imageURL;' width='120' height='120' /></div>
-		<div class='catName white2LGray'><span data-bind='var: category(pretty); format:catText; extension: myRIA;'></span></div>
+		<div class='thumbContainer floatLeft marginRight'><img src='blank.gif' class='catThumb' alt='' data-bind='var: category(%meta.CAT_THUMB); format:imageURL;' width='35' height='35' /></div>
+		<div class='catName'><span data-bind='var: category(pretty); format:catText; extension: myRIA;'></span></div>
 	</div>
 </li>
 
@@ -326,18 +319,20 @@ remember to NOT put the button inside the 'onclick' container or two events will
 <!--
 Essentially the same as productListTemplate but allows for different size containers for each product.
 Leave the anyMasonry class, and the pickClass data-bind.
+floatleft is on the LI just so the elements are inline before masonry has run.
 -->
-<li id='productListTemplateMasonry' class='loadingBG anyMasonry' onMouseOver="$('.quickView',$(this)).show();" onMouseOut="$('.quickView').hide();" data-bind="useParentData:true; format:pickClass; extension:store_masonry;">
+<li id='productListTemplateMasonry' class='loadingBG anyMasonry floatLeft' onMouseOver="$('.quickView',$(this)).show();" onMouseOut="$('.quickView').hide();" data-bind="useParentData:true; format:pickClass; extension:store_masonry;">
 
 	<button class='floatRight pointer quickView displayNone' onClick="quickView('product',{'templateID':'productTemplateQuickView','pid':$(this).closest('[data-pid]').attr('data-pid')});">Quickview</button>
 
-	<div onClick="showContent('product',{'pid':$(this).attr('data-pid')})" data-bind='var:product(pid);format:assignAttribute; attribute:data-pid;' class='pointer'>
+	<div onClick="showContent('product',{'pid':$(this).attr('data-pid')});" data-bind='var:product(pid);format:assignAttribute; attribute:data-pid;' class='pointer'>
+		<div class='masonInnerContainer'>
 		<div class='prodThumbContainer'>
 			<div class='masonImage' data-bind="var:product(zoovy:prod_image1); format:assignAttribute; attribute:data-imgsrc;"></div> 
-			<div class='positionAbs' >
+			<div class='cycle-overlay' >
 				<h5 data-bind='var: product(zoovy:prod_name); format:text;'></h5>
 				<span data-bind='var: reviews(reviews.average); format:addClass; className:review_;' class='reviewSprite floatRight'></span>
-				<h6 data-bind='var: product(zoovy:base_price); format:money; currencySign: $;  hideZero:true; className:price; pretext: Our Price: ;'></h6>
+				<h6 class='price' data-bind='var: product(zoovy:base_price); format:money; currencySign: $;  hideZero:true;'></h6>
 			</div>
 		</div>	
 	</div>
@@ -426,18 +421,19 @@ remember to NOT put the button inside the 'onclick' container or two events will
 
 SANITY -> if you change the height and width of this image, change the .minimalMode .searchResultsProduct in qs_styles.css to match
 -->
-<li id='productListTemplateResults' class='loadingBG searchResultsProduct anyMasonry' data-bind="useParentData:true; format:pickClass; extension:store_masonry;">
-	<div onClick="app.ext.myRIA.a.handleProdPreview($(this).parent().attr('data-pid'));" class='pointer'>
+<li id='productListTemplateResults' class='loadingBG searchResultsProduct anyMasonry' data-bind="useParentData:true; format:pickClass; extension:store_masonry;" onMouseOver="$('.quickView',$(this)).show();" onMouseOut="$('.quickView').hide();">
+	<button class='floatRight pointer quickView displayNone' onClick="quickView('product',{'templateID':'productTemplateQuickView','pid':$(this).closest('[data-pid]').attr('data-pid')});">Quickview</button>
+
+	<div onClick="showContent('product',{'pid':$(this).parent().attr('data-pid')});" class='pointer'>
+		<div class='masonInnerContainer'>
 		<div class='prodThumbContainer'>
-		<!-- <img src='blank.gif' class='prodThumb' alt='' data-bind='var: product(images); format:imageURL;isElastic:1;bgcolor:ffffff;' width='120' height='120' /> -->
-			<div class='masonImage' data-bind="var:product(images); index:0; format:assignElasticImgSrc; extension:store_masonry;"></div>
-			<div class='positionAbs'>
-				<h5 class='hideInMinimalMode' data-bind='var: product(prod_name); format:text;'></h5>
-				<h6 class='hideInMinimalMode' data-bind='var: product(base_price); format:money; isElastic:1; currencySign: $;  hideZero:true; className:price; pretext: Our Price: ;'></h6>
+			<div class='masonImage' data-bind="var:product(images); index:0; format:assignElasticImgSrc; extension:store_masonry;"></div> 
+			<div class='cycle-overlay' >
+				<h5 data-bind='var: product(prod_name); format:text;'></h5>
+				<h6 class='price' data-bind='var: product(base_price); format:money; isElastic:1; currencySign: $;  hideZero:true;'></h6>
 			</div>
-		</div>
+		</div>	
 	</div>
-	<div class='hideInMinimalMode pointer moreDetails' onClick="showContent('product',{'pid':$(this).parent().attr('data-pid')});">more details</div>
 </li>
 
 <li id='productListTemplateResultsNoPreview' class='loadingBG searchResultsProduct ' >
@@ -969,7 +965,7 @@ subscribeListsArticle is used for authenticated buyers
 
 	<div class='previewListContainer'>
 		<!-- productListTemplateResults gets loaded into here -->
-		<ul id='resultsProductListContainer' class='listStyleNone fluidList noPadOrMargin productList'></ul>
+		<ul id='resultsProductListContainer' class='listStyleNone noPadOrMargin masonList'></ul>
 	</div>
 
 </div>

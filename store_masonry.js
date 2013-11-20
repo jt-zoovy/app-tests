@@ -41,17 +41,27 @@ var store_masonry = function() {
 					app.u.dump(" -> now do some masonry magic.");
 					var $context = $(app.u.jqSelector('#'+infoObj.parentID));
 					if(!$context.data('masonized')){
-						app.u.dump(" -> content area has not been masonificated yet. go for it.");
 						app.ext.store_masonry.u.masonImageInit($context);
 						app.ext.store_masonry.u.runMasonry($context);
 						$context.data('masonized',true);
-					}
+						}
 					else {
-						app.u.dump(" -> content area HAS ALREADY been masonificated yet. do a reload.");
 						setTimeout(function(){app.ext.store_masonry.u.reloadMasonry($context);},2000);
-					}
-				}]);
-				
+						}
+					}]);				
+				app.rq.push(['templateFunction','searchTemplate','onCompletes',function(infoObj) {
+					app.u.dump(" -> now do some masonry magic.");
+					var $context = $(app.u.jqSelector('#'+infoObj.parentID));
+					if(!$context.data('masonized')){
+						app.ext.store_masonry.u.masonImageInit($context);
+						app.ext.store_masonry.u.runMasonry($context);
+						$context.data('masonized',true);
+						}
+					else {
+						setTimeout(function(){app.ext.store_masonry.u.reloadMasonry($context);},2000);
+						}
+					}]);
+					
 				r = true;
 
 				return r;
@@ -130,7 +140,7 @@ var store_masonry = function() {
 				//initialize
 				setTimeout(function() {
 					var masonry = $target.masonry({
-						columnWidth		:	177,
+//						columnWidth		:	($target.width() / 5),
 						itemSelector	:	'.anyMasonry',
 						gutter			:	0,
 					//	isFitWidth		:	true,
@@ -165,11 +175,10 @@ var store_masonry = function() {
 			makeImageFromImgSrc : function($tag, attempts){
 				attempts = attempts || 0;
 				if($tag.attr('data-imgsrc')){
-					app.u.dump(" -> $tag.closest('.anyMasonry').css('backgroundColor'): "+this.rgb2hex($tag.closest(".anyMasonry").css('backgroundColor')));
  					$tag.append(app.u.makeImage({
 						"name"	: $tag.data('imgsrc'),
-						"w"		: $tag.closest(".anyMasonry").innerWidth(), //use the parent element to get the image height and width. This works fine as long as the image SHOULD fill the entire element. if not, put a fixed height/width on the $tag and use that to generate the image dimensions.
-						"h"		: $tag.closest(".anyMasonry").innerHeight(),
+						"w"		: ($tag.closest(".anyMasonry").innerWidth() - 10), //use the parent element to get the image height and width. This works fine as long as the image SHOULD fill the entire element. if not, put a fixed height/width on the $tag and use that to generate the image dimensions.
+						"h"		: ($tag.closest(".anyMasonry").innerHeight() - 10),
 						"b"		: this.rgb2hex($tag.closest(".anyMasonry").css('backgroundColor')),
 						"tag"	: 1
 					}));

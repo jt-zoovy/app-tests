@@ -139,7 +139,7 @@ h2, h3, h4, h5, h6	{font-weight:normal;}
 .cycle-overlay { 
     position: absolute; bottom: 0; width: 100%; z-index: 600;
 	font-size:.85em;
-    background: #fff; color: #222; padding: 5px; opacity: .7;
+    background: #fff; color: #333; padding: 5px; opacity: .7;
 	box-sizing:border-box;
 	-moz-box-sizing:border-box;
 	webkit-box-sizing:border-box;
@@ -155,12 +155,27 @@ h2, h3, h4, h5, h6	{font-weight:normal;}
 
 
 
+/*
+//////////			CATEGORY LISTS			\\\\\\\\\\\
+*/
+
+.categoryList > li {
+    height: 35px;
+    width: 100%;
+	}
+.categoryList li {
+    font-size:1em;
+	}
+.catName	{padding-top:.3em; font-size:1em;}
+
 
 /*
 //////////			PRODUCT LISTS			\\\\\\\\\\\
 */
 
-
+.productList li {
+    font-size:1em;
+	}
 
 .quickView	{left:-5px;}
 .responsiveProdlist li	{
@@ -210,6 +225,26 @@ form.prodViewerAddToCartForm	{display:inline;}
 
 
 
+	
+	
+/*
+//////////			MASONRY 		\\\\\\\\\\\
+note -> less variance at a smaller screen size. As screen size enlarges, more variation in sizes will appear.
+*/
+
+.anyMasonry	{
+	width:49%; margin:0.5%; overflow:hidden;
+	}
+.anyMasonry .masonImage	{margin:5px;}
+.anyMasonry.masonOne {height:148px; background-color:#f0f0f0;}
+.anyMasonry.masonTwo {height:148px; background-color:#e4e4e4;}
+.anyMasonry.masonThree {height:148px; background-color:#dedede;}
+.anyMasonry.masonFour  {height:148px; background-color:#d8d8d8;}
+
+
+
+
+
 /* 
     media queries 
     some style overrides to make things more pleasant on mobile devices
@@ -217,7 +252,7 @@ form.prodViewerAddToCartForm	{display:inline;}
 
 @media only screen and (max-width: 480px), only screen and (max-device-width: 480px) {
     .cycle-slideshow { width: 200px;}
-    .cycle-overlay { padding: 4px }
+    .cycle-overlay { padding: 4px;}
     .cycle-caption { bottom: 4px; right: 4px }
 	}
 	
@@ -237,6 +272,7 @@ form.prodViewerAddToCartForm	{display:inline;}
 	#mastHeadSearchButton	{padding:.2em; top:0px}
 	
 	.productSlideshowContainer	{float:right; width:40%; margin:0; z-index:20; position:relative; text-align:right;}
+	.productSlideshowContainer .cycle-overlay { text-align:right;}
 	.bannerContainer .mainBanner	{display:inline-block;}
 
 	.responsiveProdlist li	{
@@ -244,7 +280,10 @@ form.prodViewerAddToCartForm	{display:inline;}
 		width:19%;
 		height: 180px;
 		}
-	.cycle-overlay { text-align:right;}
+	
+	.categoryList > li {
+		width: 49%; float:left; margin:0 1% .5em 0;
+		}
 
 	.ui-tabs .ui-tabs-nav li a {
 		padding: 0.5em 1em;
@@ -255,6 +294,10 @@ form.prodViewerAddToCartForm	{display:inline;}
 	.prodDetailImagesContainer	{display:block; position:relative; margin:0; width:39%; float:left;}
 	.prodDetailSummaryATC	{float:right; margin:0; float:right; width:60%;}
 	.ui-tabs-nav	{font-size:1em;}
+	.cycle-overlay	{font-size:1em;}
+
+	.anyMasonry	{width:19%;}
+	.anyMasonry.masonOne {height:305px; width:38%;} /* masonry works better if all widths to be increments of each other, it appears. so 38% instead of 39%. */
 
 	}
 
@@ -264,18 +307,7 @@ form.prodViewerAddToCartForm	{display:inline;}
 @media only screen and (min-width: 1040px) {
 	.productSlideshowContainer	{width:20%;}
 	.responsiveProdlist li {height:270px;}
+	.anyMasonry.masonTwo {height:305px;}
 	}
 	
-	
-	
-/*
-//////////			MASONRY 		\\\\\\\\\\\
-*/
-.positionAbs {width:100%; position:absolute; bottom:0; left:0; text-align:center; background:rgba(255, 255, 255, 0.5); padding:0 0 10px 0;}
-.moreDetails {height:15px; position:absolute; bottom:0; left:0;}
-.anyMasonry.masonOne {height:305px; width:305px; margin:0 0 0.5% 0.5em; background-color:#f0f0f0;}
-.anyMasonry.masonTwo {height:148px; width:305px; margin:0 0 0.5% 0.5em; background-color:#e4e4e4;}
-.anyMasonry.masonThree {height:305px; width:148px; margin:0 0 0.5% 0.5em; background-color:#dedede;}
-.anyMasonry.masonFour  {height:148px; width:148px; margin:0 0 0.5% 0.5em; background-color:#d8d8d8;}
-
 
