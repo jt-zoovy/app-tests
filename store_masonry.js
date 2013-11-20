@@ -160,7 +160,7 @@ var store_masonry = function() {
 						"name"	: $tag.data('imgsrc'),
 						"w"		: $tag.closest(".anyMasonry").innerWidth(), //use the parent element to get the image height and width. This works fine as long as the image SHOULD fill the entire element. if not, put a fixed height/width on the $tag and use that to generate the image dimensions.
 						"h"		: $tag.closest(".anyMasonry").innerHeight(),
-						"b"		: "tttttt",
+						"b"		: $tag.closest(".anyMasonry").css('background-color'),
 						"tag"	: 1
 					}));
 				}
