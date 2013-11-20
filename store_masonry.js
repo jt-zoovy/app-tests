@@ -38,13 +38,16 @@ var store_masonry = function() {
 				//if there is any functionality required for this extension to load, put it here. such as a check for async google, the FB object, etc. return false if dependencies are not present. don't check for other extensions.
 				
 				app.rq.push(['templateFunction','categoryTemplate','onCompletes',function(infoObj) {
+					app.u.dump(" -> now do some masonry magic.");
 					var $context = $(app.u.jqSelector('#'+infoObj.parentID));
 					if(!$context.data('masonized')){
+						app.u.dump(" -> content area has not been masonificated yet. go for it.");
 						app.ext.store_masonry.u.masonImageInit($context);
 						app.ext.store_masonry.u.runMasonry($context);
 						$context.data('masonized',true);
 					}
 					else {
+						app.u.dump(" -> content area HAS ALREADY been masonificated yet. do a reload.");
 						setTimeout(function(){app.ext.store_masonry.u.reloadMasonry($context);},2000);
 					}
 				}]);
@@ -112,7 +115,9 @@ var store_masonry = function() {
 		
 			//does what the name implies
 			runMasonry : function($context) {
+				app.u.dump("BEGIN store_masonry.u.runMasonry");
 				var $target = $('.masonList', $context);
+				app.u.dump(" -> $target.length: "+$target.length);
 				//initialize
 				setTimeout(function() {
 					var masonry = $target.masonry({
@@ -153,8 +158,8 @@ var store_masonry = function() {
 				if($tag.attr('data-imgsrc')){
  					$tag.append(app.u.makeImage({
 						"name"	: $tag.data('imgsrc'),
-						"w"		: $tag.innerWidth(),
-						"h"		: $tag.innerHeight(),
+						"w"		: $tag.closest(".anyMasonry").innerWidth(), //use the parent element to get the image height and width. This works fine as long as the image SHOULD fill the entire element. if not, put a fixed height/width on the $tag and use that to generate the image dimensions.
+						"h"		: $tag.closest(".anyMasonry").innerHeight(),
 						"b"		: "tttttt",
 						"tag"	: 1
 					}));
@@ -165,7 +170,7 @@ var store_masonry = function() {
 						}, 250);
 				}
 				else {
-					app.u.dump("-> ERROR app.ext.store_masonry.u.makeImageFromImgSrc failed to load an image for following tag:"); app.u.dump($tag);
+					app.u.dump("-> ERROR app.ext.store_masonry.u.makeImageFromImgSrc failed to load an image for following tag:"); // app.u.dump($tag);
 				}
 			},
 		

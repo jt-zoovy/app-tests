@@ -33,7 +33,8 @@ console.log("first script tag reached.");
 
 <!-- here to see how much this impacts app load time. -->
 <script src="app-widespread.js"></script>
-<script src="extensions/store_search.js"></script>
+<script src="store_search.js"></script>
+<script src="store_masonry.js"></script>
 <script src="extensions/store_product.js"></script>
 <script src="extensions/store_prodlist.js"></script>
 <script src="extensions/store_navcats.js"></script>
@@ -41,7 +42,6 @@ console.log("first script tag reached.");
 <script src="extensions/store_cart.js"></script>
 <script src="extensions/cart_checkout_order.js"></script>
 <script src="extensions/checkout/extension.js"></script>
-<!-- checkout intentionally left out for now. -->
 
 <script type="text/javascript">
 console.log("scripts have been loaded");
@@ -55,16 +55,16 @@ var app = {vars:{
 	"checkoutAuthMode" : "active",//can be passive, active or required
 	"testURL":"http://www.sporks.zoovy.com/", //used ONLY if protocol is file: (for testing)
 	"extensions" : [
-		{"namespace":"widespread","filename":"extensions/app-widespread.js"},
-		{"namespace":"store_navcats","filename":"extensions/store_navcats.js"},
-		{"namespace":"store_search","filename":"extensions/store_search.js"},
+		{"namespace":"widespread","filename":"app-widespread.js"},
+		{"namespace":"store_search","filename":"store_search.js"},
+		{"namespace":"store_masonry","filename":"store_masonry.js"},
 		{"namespace":"store_product","filename":"extensions/store_product.js"},
 		{"namespace":"store_prodlist","filename":"extensions/store_prodlist.js"},
+		{"namespace":"store_navcats","filename":"extensions/store_navcats.js"},
 		{"namespace":"store_crm","filename":"extensions/store_crm.js"},
 		{"namespace":"store_cart","filename":"extensions/store_cart.js"},
 		{"namespace":"cco","filename":"extensions/cart_checkout_order.js"},
-		{"namespace":"orderCreate","filename":"extensions/checkout/extension.js"},
-		{"namespace":"store_masonry","filename":"extensions/store_masonry.js"}
+		{"namespace":"orderCreate","filename":"extensions/checkout/extension.js"}
 		]
 	},u:{},rq:[]};
 
@@ -251,7 +251,7 @@ don't modify the 'data-templateid' unless you are changing template names and up
 
 	<ul data-bind="var: category(@subcategoryDetail); format: categoryList; extension: store_navcats; loadsTemplate: categoryListTemplate; detail:max;" class='listStyleNone fluidList clearfix noPadOrMargin categoryList'></ul><!-- outputs a list of subcategories -->
 
-	<ul data-bind="var: category(@products); format: productList; editor: finder; extension: store_prodlist; loadsTemplate: productListTemplateMasonry; withReviews:1; items_per_page: 25;" class='listStyleNone responsiveProdlist clearfix noPadOrMargin'></ul><!-- outputs the product list -->
+	<ul data-bind="var: category(@products); format: productList; editor: finder; extension: store_prodlist; loadsTemplate: productListTemplateMasonry; withReviews:1; items_per_page: 25;" class='listStyleNone responsiveProdlist clearfix noPadOrMargin masonList'></ul><!-- outputs the product list -->
 
 	<p data-bind="var: category(%page.description2); format:wiki; wikiFormats:myRIA; editor: textarea;"></p>
 
