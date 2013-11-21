@@ -84,13 +84,15 @@ h2, h3, h4, h5, h6	{font-weight:normal;}
 
 .labelsAsBreaks label, .labelsAsBreaks .label	{display:block; margin-bottom:.2em;}
 
+.ui-dialog	{z-index:1000;}
 
 /*
 //////////			HOMEPAGE			\\\\\\\\\\\
 */
 .bannerContainer	{position:relative; height:240px;}
 .bannerContainer .mainBanner	{display:none; position:absolute; z-index:10; top:0; left:0; height:240px; width:100%; background:#efefef; }
-.productSlideshowContainer	{ margin:0 auto; z-index:110; text-align:center;}
+.productSlideshowContainer	{ margin:0 auto; z-index:110; text-align:center; background:#ffffff;}
+.productSlideshowContainer .thumbContainer {text-align:center;}
 .slide	{width:100%; overflow:hidden; height:240px;}
 
 
@@ -177,7 +179,7 @@ h2, h3, h4, h5, h6	{font-weight:normal;}
     font-size:1em;
 	}
 
-.quickView	{left:-5px;}
+.quickView	{background-color:#9eca37; border:0; color:#FFF; font-size:1em; padding:.2em .4em; left:0;}
 .responsiveProdlist li	{
 	height: 180px; width:48%;
 	display:block; float:left;
@@ -235,7 +237,7 @@ note -> less variance at a smaller screen size. As screen size enlarges, more va
 .anyMasonry	{
 	width:49%; margin:0.5%; overflow:hidden;
 	}
-.anyMasonry .masonImage	{margin:5px;}
+.anyMasonry .masonImageContainer	{margin:5px;}
 .anyMasonry.masonOne {height:148px; background-color:#f0f0f0;}
 .anyMasonry.masonTwo {height:148px; background-color:#e4e4e4;}
 .anyMasonry.masonThree {height:148px; background-color:#dedede;}
@@ -305,7 +307,6 @@ note -> less variance at a smaller screen size. As screen size enlarges, more va
 
 
 @media only screen and (min-width: 1040px) {
-	.productSlideshowContainer	{width:20%;}
 	.responsiveProdlist li {height:270px;}
 	.anyMasonry.masonTwo {height:305px;}
 	}

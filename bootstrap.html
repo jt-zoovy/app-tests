@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+
+
+<script>
+//http://net.tutsplus.com/articles/news/how-to-make-ajax-requests-with-raw-javascript/
+    // Our simplified "load" function accepts a URL and CALLBACK parameter.  
+ 
+      
+    function load(url, callback) {  
+		console.log('load: '+url);
+            var xhr;  
+              
+            if(typeof XMLHttpRequest !== 'undefined') xhr = new XMLHttpRequest();  
+            else {  
+                var versions = ["MSXML2.XmlHttp.5.0", "MSXML2.XmlHttp.4.0", "MSXML2.XmlHttp.3.0", "MSXML2.XmlHttp.2.0",  "Microsoft.XmlHttp"]
+
+                 for(var i = 0, len = versions.length; i < len; i++) {  
+                    try {  
+                        xhr = new ActiveXObject(versions[i]);  
+                        break;  
+                    	}  
+                    catch(e){}  
+                 } // end for  
+            }  
+              
+            xhr.onreadystatechange = ensureReadiness;  
+              
+            function ensureReadiness() { 
+				console.log('ensuring readiness. xhr.readyState: '+xhr.readyState);
+                if(xhr.readyState < 4) {  
+                    return;  
+                }  
+                  
+                if(xhr.status !== 200) {  
+                    return;  
+                }  
+      
+                // all is well    
+                if(xhr.readyState === 4) {  
+                    callback(xhr);  
+                }             
+            }  
+              
+            xhr.open('GET', url, true);  
+            xhr.send('');  
+        }  
+</script>
+
+
+</head>
+
+<body>
+
+
+<h1>This is my original content.</h1>
+
+<div id='newContent'></div>
+
+<script>
+    load('http://www.sporks.zoovy.com/index.html', function(xhr) {
+		console.log('got to here');//	 console.log(xhr.responseText);
+//		document.getElementByID('newContent').innerHTML = xhr.responseText.get;
+//console.log(" -> xhr.responseText.getElementsByTagName('head'): ");
+//document.getElementsByTagName('body')[0].innerHTML = xhr.responseText.match(/<body[^>]*>[\s\S]*<\/body>/gi);
+//document.getElementsByTagName('head')[0].innerHTML = xhr.responseText.match(/<head[^>]*>[\s\S]*<\/head>/gi);
+//document.write(xhr.responseText.match(/<head[^>]*>[\s\S]*<\/head>/gi));
+		document.write(xhr.responseText);
+    	}); 
+</script>
+</body>
+</html>

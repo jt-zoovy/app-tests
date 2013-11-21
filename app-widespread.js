@@ -154,6 +154,20 @@ var widespread = function() {
 							app.u.makeImage($.extend({},data.bindData,{h:440,w:440}))+" 2x"
 							)
 						}
+					else if(data.bindData.range == 'homeCycle')	{
+						//used for defaultimage.
+						data.bindData.w = 280;
+						data.bindData.h = 220;
+
+						var srcSet = new Array(
+							app.u.makeImage(data.bindData)+" 800w 1x",
+							app.u.makeImage($.extend({},data.bindData,{h:440,w:560}))+" 800w 2x", //double the default size. for high density screens.
+							app.u.makeImage($.extend({},data.bindData,{h:220,w:360}))+" 1x",
+							app.u.makeImage($.extend({},data.bindData,{h:440,w:720}))+" 2x",
+							app.u.makeImage($.extend({},data.bindData,{h:220,w:500}))+" 1x",
+							app.u.makeImage($.extend({},data.bindData,{h:440,w:1000}))+" 2x"
+							)
+						}
 					else if(data.bindData.range == 'prodDetailMainPic')	{
 						//used for defaultimage.
 						data.bindData.w = 260;

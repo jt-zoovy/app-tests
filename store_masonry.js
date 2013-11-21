@@ -139,8 +139,9 @@ var store_masonry = function() {
 //				app.u.dump(" -> $target.length: "+$target.length);
 				//initialize
 				setTimeout(function() {
+//					app.u.dump("$target.width(): "+Math.round(($target.width() / 5)));
 					var masonry = $target.masonry({
-//						columnWidth		:	($target.width() / 5),
+//						columnWidth		:	(Math.round(($target.width() / 5))), //masonry responds better to variable column width without this.
 						itemSelector	:	'.anyMasonry',
 						gutter			:	0,
 					//	isFitWidth		:	true,
