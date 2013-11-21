@@ -2357,16 +2357,18 @@ ex:  elasticsearch.size = 200
 */
 elasticsearch.size = 50;
 
-				$.extend(infoObj,{'callback':'handleElasticResults','datapointer':"appPublicSearch|"+JSON.stringify(elasticsearch),'extension':'store_search','templateID':'productListTemplateResults','list':$('#resultsProductListContainer')});
+// ** 201346 -> extended infoObj w/ a new templateID was causing the ondepart templatefunctions to not execute properly for search results.
+//				$.extend(infoObj,{'callback':'handleElasticResults','datapointer':"appPublicSearch|"+JSON.stringify(elasticsearch),'extension':'store_search','templateID':'productListTemplateResults','list':$('#resultsProductListContainer')});
 				
 				//Used to build relative path
 				infoObj.elasticsearch = $.extend(true, {}, elasticsearch);
 				
 				
 				app.ext.store_search.u.updateDataOnListElement($('#resultsProductListContainer'),elasticsearch,1);
-				app.ext.store_search.calls.appPublicSearch.init(elasticsearch,infoObj);
+//				app.ext.store_search.calls.appPublicSearch.init(elasticsearch,infoObj);
+				app.ext.store_search.calls.appPublicSearch.init(elasticsearch,$.extend(true,{},infoObj,{'callback':'handleElasticResults','datapointer':"appPublicSearch|"+JSON.stringify(elasticsearch),'extension':'store_search','templateID':'productListTemplateResults','list':$('#resultsProductListContainer')}));
 				app.model.dispatchThis();
-
+//				app.u.dump(" --------> execute onCompletes for searchTemplate");
 				infoObj.state = 'onCompletes'; //needed for handleTemplateFunctions.
 				app.ext.myRIA.u.handleTemplateFunctions(infoObj);
 
@@ -3134,7 +3136,7 @@ else	{
 //these will change the cursor to 'wait' and back to normal as each template loads/finishes loading.
 					app.ext.myRIA.template[pageTemplates[i]].onInits.push(function(){app.ext.myRIA.u.changeCursor('wait')});
 					app.ext.myRIA.template[pageTemplates[i]].onCompletes.push(function(P){
-//						app.u.dump("turn of cursor: "+P.templateID);
+						app.u.dump("turn of cursor: "+P.templateID);
 						app.ext.myRIA.u.changeCursor('auto')
 						});
 					}
