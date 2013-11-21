@@ -10,13 +10,15 @@
 <meta property="og:image" content="" id='ogImage' >
 <meta property="og:description" content="" id='ogDescription' >
 
+<meta name="version" content="kiss/1.0 zmvc/201346 rev/a" />
+<meta name="template-name" content="fashion" />
+<meta name="last-save" content="" />
 
 <base href='' /><!-- leave blank so it works for a local file. updated to / if protocol is not file: -->
 
 
 <link href='https://fonts.googleapis.com/css?family=Voltaire' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" type="text/css" href="jquery-ui-1.10.3.custom.min.css">
-<link rel="stylesheet" type="text/css" href="app-quickstart.css">
 <link rel="stylesheet" type="text/css" href="app-widespread.css">
 
 <script >
@@ -98,8 +100,8 @@ app.u.loadScript(app.vars.baseURL+'app-widespread-init.js');
 		<div class='menuAndSearch'>
 			<ul class='mainMenu menuitems'>
 				<li class='menuItem2' onClick="return showContent('company',{'show':'contact'});">contact</li>
-<!--				<li class='menuItem3'>you</li> only show if logged in -->
-				<li class='menuItem3' onClick="return showContent('customer',{'show':'login'});">login</li><!-- show if logged out -->
+				<li class='menuItem3 hideIfLoggedOut' onClick="return showContent('customer',{'show':'contact'});">you</li>
+				<li class='menuItem3 hideIfLoggedIn' onClick="return showContent('customer',{'show':'login'});">login</li><!-- show if logged out -->
 				<li class='menuItem4' onClick="return showContent('cart',{'show':'cart'});">cart</li>
 				<li class='menuItem5' onClick="return showContent('checkout',{'show':'checkout'});">checkout</li>
 			</ul>
