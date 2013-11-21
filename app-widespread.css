@@ -3,7 +3,12 @@ CSS defaults for a small screen, then uses media queries to support larger.
 This optimizes the load experience for mobile devices, which are more bandwidth-sensitive
 */
 
-/* throw away classes. here only for testing */
+
+
+.loadingBG	{background-image:url(loading.png) !important; background-repeat: no-repeat !important; background-position: center center; min-height:100px !important; min-width:100px;}
+li.loadingBG, .wait	{background:url(wait.gif) no-repeat top center !important; min-height:20px !important; min-width:20px;}
+
+
 .contrastUI	{background-color: #9eca37;}
 a	{color: #9eca37;}
 a:hover	{color:#FF0;}
