@@ -36,9 +36,8 @@ var widespread = function() {
 				var r = false; //return false if extension won't load for some reason (account config, dependencies, etc).
 				//if there is any functionality required for this extension to load, put it here. such as a check for async google, the FB object, etc. return false if dependencies are not present. don't check for other extensions.
 				
-
+//resize is executed continuously and the browser dimensions change. This function allows the code to be executed once, on finish (or pause)
 	$(window).resize(function() {
-		//resize is executed continuously and the browser dimensions change. This function allows the code to be executed once, on finish (or pause)
 		if(this.resizeTO) {clearTimeout(this.resizeTO);}
 		this.resizeTO = setTimeout(function() {
 			$(this).trigger('resizeEnd');
@@ -63,8 +62,35 @@ var widespread = function() {
 			});
 		return false;
 		});
-	
-				
+	//.menu adds some formatting for the HTOW dropdown.
+	$('#hotwMenu').menu().width('200').on('click','li',function(){
+		showContent('',$(this).data());
+		});
+
+//each time the HOTW button is clicked, the dropdown is generated showing the last few pages viewed.
+	$('#hotwButton').button({icons: {primary: "ui-icon-circle-triangle-w"},text: false}).on('click',function(){
+		var
+			$menu = $('#hotwMenu').empty(),
+			hotw = app.ext.myRIA.vars.hotw;
+// SANITY -> hotw has a fixed length (15 by default).
+//start at spot 1. spot 0 is the page in focus.
+		for(var i = 1; i < 8; i += 1)	{
+			if(hotw[i])	{
+				$menu.append($("<li \/>").addClass('pointer').data(hotw[i]).html(app.ext.widespread.u.formatInfoObj4HOTW(hotw[i])));
+				}
+			else	{
+				break; //exit early once the end of hotw is reached.
+				}
+			}
+		$('#hotwMenu').slideDown();
+		$(document.body).one('click',function(){
+			$menu.slideUp();
+			});
+		return false;
+		});
+
+
+
 				
 				r = true;
 
@@ -111,7 +137,7 @@ var widespread = function() {
 					$tag.append($ul);
 					}
 				else	{
-					app.u.dump(" -> image 2 is NOT set.");
+//					app.u.dump(" -> image 2 is NOT set.");
 					//if image2 isn't set, skip em all.
 					}
 				//<a href='blank.gif' data-bind='var: product(zoovy:prod_image2); format:imageURL2Href; h:; w:;' data-gallery="gallery"  ><img src='blank.gif' alt='' data-bind='var: product(zoovy:prod_image2); format:imageURL;' width='75' height='75' /></a>
@@ -199,6 +225,42 @@ var widespread = function() {
 //utilities are typically functions that are exected by an event or action.
 //any functions that are recycled should be here.
 		u : {
+
+
+			formatInfoObj4HOTW : function (sotw){
+				var r; //what is returned. a 'pretty' text for this history item.
+				switch(sotw.pageType)	{
+					case 'product':
+						r = "product: "+((app.data['appProductGet|'+sotw.pid]) ?  app.data['appProductGet|'+sotw.pid]['%attribs']['zoovy:prod_name'] : sotw.pid);
+						break;
+					
+					case 'category':
+						r = "category: "+((app.data['appNavcatDetail|'+sotw.navcat]) ?  app.data['appNavcatDetail|'+sotw.navcat].pretty : sotw.navcat);
+						break;
+					
+					case 'homepage':
+						r = "Home";
+						break;
+					
+					case 'search':
+						r = "Search: "+sotw.KEYWORDS;
+						break;
+					
+					case 'cart':
+						r = 'Cart';
+						break;
+			
+					case 'checkout':
+						r = 'Checkout';
+						break;
+			
+					default:
+						r = sotw.pageType + ': '+sotw.show;
+					}
+				return r;
+				}
+
+
 			}, //u [utilities]
 
 //app-events are added to an element through data-app-event="extensionName|functionName"

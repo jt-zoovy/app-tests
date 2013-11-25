@@ -198,29 +198,7 @@ app.u.loadApp = function() {
 app.u.appInitComplete = function(P)	{
 	app.u.dump("Executing myAppIsLoaded code...");
 	
-	$('#hotwMenu').menu().width('200').on('click','li',function(){
-		showContent('',$(this).data());
-		});
-	$('#hotwButton').button({icons: {primary: "ui-icon-circle-triangle-w"},text: false}).on('click',function(){
-		var
-			$menu = $('#hotwMenu').empty(),
-			hotw = app.ext.myRIA.vars.hotw;
-// SANITY -> hotw has a fixed length (15 by default).
-//start at spot 1. spot 0 is the page in focus.
-		for(var i = 1; i < 6; i += 1)	{
-			if(hotw[i])	{
-				$menu.append($("<li \/>").html(formatInfoObj4HOTW(hotw[i])));
-				}
-			else	{
-				break; //exit early once the end of hotw is reached.
-				}
-			}
-		$('#hotwMenu').slideDown();
-		$(document.body).one('click',function(){
-			$menu.slideUp();
-			});
-		return false;
-		});
+
 	
 	
 	app.ext.myRIA.pageTransition = function($o,$n)	{
@@ -242,34 +220,7 @@ app.u.appInitComplete = function(P)	{
 		}
 	}
 
-function formatInfoObj4HOTW(sotw){
-	var r; //what is returned. a 'pretty' text for this history item.
-	switch(sotw.pageType)	{
-		case 'product':
-			r = (app.data['appProductGet|'+sotw.pid]) ?  app.data['appProductGet}'+sotw.pid]['%attribs']['zoovy:prod_name'] : "product: "+sotw+pid;
-			break;
-		
-		case 'category':
-			r = (app.data['appNavcatDetail|'+sotw.pid]) ?  app.data['appProductGet}'+sotw.pid]['%attribs']['zoovy:prod_name'] : "product: "+sotw+pid;
-			break;
-		
-		case 'search':
-			r = "Search: "+sotw.KEYWORDS;
-			break;
-		
-		case 'cart':
-			r = 'Cart';
-			break;
 
-		case 'checkout':
-			r = 'Checkout';
-			break;
-
-		default:
-			r = sotw.pageType + ': '+sotw.show;
-		}
-	return r;
-	}
 
 
 console.log(" -> app utilities have been added");
