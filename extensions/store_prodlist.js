@@ -195,21 +195,36 @@ A special translate template for product so that reviews can be merged into the 
 					tmp['reviews'] = app.ext.store_prodlist.u.summarizeReviews(pid); //generates a summary object (total, average)
 					tmp['reviews']['@reviews'] = app.data['appReviewsList|'+pid]['@reviews']
 					}
-				(tagObj.jqObj instanceof jQuery) ? tagObj.jqObj.anycontent({'datapointer':tagObj.datapointer}) : $(app.u.jqSelector('#',tagObj.parentID)).anycontent({'datapointer':tagObj.datapointer})
-//				app.renderFunctions.translateTemplate(app.data[tagObj.datapointer],tagObj.parentID);
+				
+				var $product =(tagObj.jqObj instanceof jQuery) ? tagObj.jqObj :  $(app.u.jqSelector('#',tagObj.parentID));
+				var $prodlist = $product.parent();
+				
+				$product.anycontent({'datapointer':tagObj.datapointer});
+				
+				$prodlist.data('numProductLoaded',($prodlist.data('numProductLoaded') + 1));
+				if(($prodlist.data('numProductLoaded') == $prodlist.data('prodlist').items_per_page) || ($prodlist.data('numProductLoaded') == $prodlist.data('prodlist').total_product_count))	{
+//					app.u.dump($._data($prodlist[0],'events')); //how to see what events are tied to an element. not a supported method.
+					$prodlist.trigger('complete');
+					}
 				},
 //error needs to clear parent or we end up with orphans (especially in UI finder).
 			onError : function(responseData,uuid)	{
 				responseData.persistent = true; //throwMessage will NOT hide error. better for these to be pervasive to keep merchant fixing broken things.
 				var pid = responseData.pid;
-				var $parent = $('#'+responseData['_rtag'].parentID)
-				$parent.empty().removeClass('loadingBG');
-				$parent.anymessage(responseData,uuid);
+
+				var $product =(tagObj.jqObj instanceof jQuery) ? tagObj.jqObj :  $(app.u.jqSelector('#',tagObj.parentID));
+				$product.empty().removeClass('loadingBG');
+				$product.anymessage(responseData,uuid);
+//even if the product errors out, productLoaded gets incremented so the oncomplete runs.
+				var $prodlist = $product.parent();
+				$prodlist.data('numProductLoaded',($prodlist.data('numProductLoaded') + 1));
+
+				
 //for UI prod finder. if admin session, adds a 'remove' button so merchant can easily take missing items from list.
 				if(app.vars.thisSessionIsAdmin)	{
 					$("<button \/>").text("Remove "+pid).button().on('click',function(){
 						app.ext.admin.u.removePidFromFinder($(this).closest("[data-pid]")); //function accepts a jquery object.
-						}).appendTo($('.ui-widget-anymessage',$parent));
+						}).appendTo($('.ui-widget-anymessage',$product));
 					}
 				}
 			},
@@ -518,7 +533,7 @@ params that are missing will be auto-generated.
 //					app.u.dump(" -> required parameters exist. Proceed...");
 					obj.csv = app.ext.store_prodlist.u.cleanUpProductList(obj.csv); //strip blanks and make sure this is an array. prod attributes are not, by default.
 
-
+//					$tag.data('total_product_count',obj.csv.length);
 //					app.u.dump(" -> plObj: "); app.u.dump(plObj);
 //					app.u.dump(" -> obj: "); app.u.dump(obj);
 					if(obj.useChildAsTemplate)	{
@@ -548,6 +563,8 @@ params that are missing will be auto-generated.
 //need a jquery obj. to work with.
 					if($tag)	{$tag.attr('id',plObj.parentID);}
 					else	{$tag = $('#'+plObj.parentID);}
+				
+					$tag.data('numProductLoaded',0); //used to count how many product have been loaded (for prodlistComplete)
 //a wrapper around all the prodlist content is created just one. Used in multipage to clear old multipage content. This allows for multiple multi-page prodlists on one page. Hey. it could happen.
 					if($('#'+plObj.parentID+'_container').length == 0)	{
 						if($tag.is('tbody'))	{

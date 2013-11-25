@@ -212,6 +212,8 @@ It is run once, executed by the renderFormat.
 					tagTuple[0] = app.renderFunctions.transmogrify({'pid':pid},plObj.loadsTemplate,data).get(0);
 					//app.u.dump(pid);
 					tagTuple[1] = true;
+//** 201346 -> This will handle the image resize, but just on this list item. That way the entire list (including items already rendered) aren't impacted.
+					app.ext.store_masonry.u.makeImageFromImgSrc($(".masonImage",$(tagTuple[0]).find("[data-imgsrc]")));
 					}
 				else if(attempts < 50){
 					setTimeout(function(){
@@ -242,8 +244,6 @@ It is run once, executed by the renderFormat.
 							$container.append(prodTags[i][0]);
 							if($container.data('masonry')){
 								$container.masonry('appended',prodTags[i][0]);
-//** 201346 -> This will handle the image resize, but just on this list item. That way the entire list (including items already rendered) aren't impacted.
-								app.ext.store_masonry.u.makeImageFromImgSrc($(".masonImage",$(prodTags[i][0])));
 								}
 							}
 						}

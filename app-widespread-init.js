@@ -80,7 +80,6 @@ app.rq.push(['templateFunction','productTemplate','onCompletes',function(P) {
 
 
 
-
 app.rq.push(['templateFunction','productTemplate','onCompletes',function(P) {
 /*
 w/ the new prodImages renderFormat, this isn't necessary anymore.	
@@ -241,7 +240,6 @@ app.u.appInitComplete = function(P)	{
 			$n.fadeIn(1000);
 			}
 		}
-	
 	}
 
 function formatInfoObj4HOTW(sotw){
@@ -278,6 +276,9 @@ console.log(" -> app utilities have been added");
 //don't execute script till both jquery AND the dom are ready.
 $(document).ready(function(){
 	app.u.dump(" -> DOM and jQuery are both loaded. handle the RQ now");
+	$('.productSlideshow','#homepageTemplate').on('complete.woot',function(){
+		app.u.dump('woot!');
+		});
 	app.u.handleRQ(0)
 	});
 

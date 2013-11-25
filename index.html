@@ -251,7 +251,7 @@ don't modify the 'data-templateid' unless you are changing template names and up
 
 	<ul data-bind="var: category(@subcategoryDetail); format: categoryList; extension: store_navcats; loadsTemplate: categoryListTemplate; detail:max;" class='listStyleNone fluidList clearfix noPadOrMargin categoryList marginBottom'></ul><!-- outputs a list of subcategories -->
 
-	<ul data-bind="var: category(@products); format: infiniteProductList; extension:prodlist_infinite; loadsTemplate: productListTemplateMasonry; withReviews:1; items_per_page: 25;" class='listStyleNone clearfix noPadOrMargin masonList'></ul><!-- outputs the product list -->
+	<ul  data-bind="var: category(@products); format: infiniteProductList; extension:prodlist_infinite; loadsTemplate: productListTemplateMasonry; withReviews:1; items_per_page: 25;" class='listStyleNone clearfix noPadOrMargin masonList'></ul><!-- outputs the product list -->
 
 	<p data-bind="var: category(%page.description); format:wiki; wikiFormats:myRIA; editor: textarea;"></p>
 
@@ -1588,39 +1588,6 @@ The 'data-action' attribute is used to assign an onclick.
 </div>
 
 
-
-
-
-
-
-
-<script>
-(function($) {
-	console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-	$(window).resize(function() {
-		//resize is executed continuously and the browser dimensions change. This function allows the code to be executed once, on finish (or pause)
-		if(this.resizeTO) {clearTimeout(this.resizeTO);}
-		this.resizeTO = setTimeout(function() {
-			$(this).trigger('resizeEnd');
-			}, 500);
-		});
-//when window is resized, generate a new logo. The code is triggered right after being bound to generate the correct size logo to start.
-	$(window).bind('resizeEnd', function() {
-		var $logo = $('.logo',$('#mastHead'));
-		var $container = $('.container:first'); //used to determine margin width so logo side align with 'shop' sides.
-		$logo.html("<img src='http://ylh.zoovy.com/media/img/ylh/W"+Math.round(($logo.width() - ($container.width() * .02) ))+"-H"+$logo.height()+"-Bffffff/Y/yourlogohere_2013.png' />"); //the 100% makes the logo scale on resize before being regenerated.
-		}).trigger('resizeEnd');
-	
-	$('#shopNowLink').on('click',function(){
-		$('#tier1categories').slideDown();
-		$( document ).one( "click", function() {
-			$('#tier1categories').slideUp();
-			});
-		return false;
-		});
-	
-	})(jQuery)
-</script>
 
 
 </body>
