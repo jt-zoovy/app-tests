@@ -13,7 +13,7 @@ Here lies quickstart.css
 body,html	{font-size:100%;}
 
 #appTemplates {display:none;} /* container for all templates. should be hidden */
-
+#mainContentArea	{position:relative;}
 
 /*
 loading class. add class to your templates if you want a loading graphic to appear while data is requested. add only to the parent element. 
@@ -296,21 +296,6 @@ so the displayNone class is used, then a .grpType_PARENT class is added if the i
 #reviewsMessage		{width:250px; height:250px;}
 #reviewFrm input, #reviewFrm textarea, #reviewFrm select	{margin-bottom:5px;}
 #reviewFrm .ui-button	{float:right;}
-
-/***************************************************
-
-BREADCRUMB
- -> used on product and category pages
-
-***************************************************/
-
-
-.breadcrumb	{margin-bottom:12px;}
-.breadcrumb li	{padding:0; margin:0; cursor:pointer; padding-right:10px;}
-.breadcrumb li:after	{content:" \00BB "; padding-left:10px; font-size:10px; font-weight:bold; color:#999999;}
-.breadcrumb li:last-child:after	{content:"";}
-
-.breadcrumb li:last-child a	{color:#666666; text-decoration:none; font-weight:bold; cursor:text;}
 
 
 
@@ -609,10 +594,19 @@ h2, h3, h4, h5, h6	{font-weight:normal;}
 
 #contentContainer	{padding:1%; position:relative;}
 #catsAndTitle	{position:relative;}
-#shopNowLink, #catsAndTitle .breadcrumb	{height:30px; line-height:30px; text-indent:1%;}
-.breadcrumb	{font-size:.85em;}
+#shopNowLink, #mastHeadBC	{height:30px; line-height:30px; text-indent:1%;}
+#mastHeadBC	{font-size:.85em; width:79%; float:left; margin:1% 1% 0 0; background:#e4e4e4; position:relative;}
 #shopNowLink	{width:18%; float:left; margin:1% 1% 0 1%; cursor:pointer; color:#fff; font-weight:bold; font-size:1.2em;}
-#catsAndTitle .breadcrumb	{width:79%; float:left; margin:1% 1% 0 0; background:#e4e4e4;}
+
+#mastHeadBC ul	{list-style:none; padding:0 20px 0 0; margin:0;}
+#mastHeadBC .breadcrumb li	{padding:0 10px 0 0; margin:0; cursor:pointer; text-wrap:none; white-space:nowrap; float:left;}
+#mastHeadBC .breadcrumb li:after	{content:" \00BB "; padding-left:10px; font-size:10px; font-weight:bold; color:#999999;}
+#mastHeadBC .breadcrumb li:last-child:after	{content:"";}
+#mastHeadBC .breadcrumb li:last-child a	{color:#666666; text-decoration:none; font-weight:bold; cursor:text;}
+
+#hotwButton	{position:absolute; top:.2em; right:.2em; padding:.2em; display:none;}
+#hotwMenu	{position:absolute; top:25px; right:.2em; z-index:1000;}
+#hotwMenu li	{display:block;}
 
 #tier1categories	{width:240px; background:#efefef; color:#333; display:none; position:absolute; top:35px; left:1%; list-style:none; margin:0; padding:0; border:2px solid #9eca37; z-index:600;}
 #tier1categories li	{padding:.2em .3em; margin:0; border-bottom:1px dotted #cccccc;}
@@ -783,7 +777,11 @@ note -> less variance at a smaller screen size. As screen size enlarges, more va
 .anyMasonry	{
 	width:49%; margin:0.5%; overflow:hidden;
 	}
-.anyMasonry .masonImageContainer	{margin:5px;}
+.masonInnerContainer, 	{display:block;
+	width:100%; height:100%;
+	}
+.anyMasonry .masonImageContainer	{width:100%;}
+.masonGeneratedImg	{margin:5px;}
 .anyMasonry.masonOne {height:148px; background-color:#f0f0f0;}
 .anyMasonry.masonTwo {height:148px; background-color:#e4e4e4;}
 .anyMasonry.masonThree {height:148px; background-color:#dedede;}

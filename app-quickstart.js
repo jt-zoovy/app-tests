@@ -364,6 +364,7 @@ document.write = function(v){
 					tmp.session = app.ext.myRIA.vars.session;
 //a category page gets translated. A product page does not because the bulk of the product data has already been output. prodlists are being handled via buildProdlist
 					app.renderFunctions.translateTemplate(tmp,tagObj.parentID);
+					app.renderFunctions.translateTemplate(tmp,'mastHeadBC');
 					}
 //product page handline
 				else if(tagObj.pid)	{
@@ -383,6 +384,7 @@ document.write = function(v){
 							}
 						}
 					else 	{} //not a child.
+					app.renderFunctions.translateTemplate(tmp,'mastHeadBC');
 					}
 				else	{
 					app.u.dump("WARNING! showPageContent has no pid or navcat defined");
@@ -2840,7 +2842,7 @@ tagObj.lists = new Array(); // all the list id's needed.
 app.model.fetchData('appPageGet|'+catSafeID); //move data from local storage to memory, if present.
 
 //goes through template.  Put together a list of all the data needed. Add appropriate calls to Q.
-app.templates[tagObj.templateID].find('[data-bind]').each(function()	{
+$(app.templates[tagObj.templateID],$('#catsAndTitle')).find('[data-bind]').each(function()	{
 
 	var $focusTag = $(this);
 	
@@ -3136,7 +3138,7 @@ else	{
 //these will change the cursor to 'wait' and back to normal as each template loads/finishes loading.
 					app.ext.myRIA.template[pageTemplates[i]].onInits.push(function(){app.ext.myRIA.u.changeCursor('wait')});
 					app.ext.myRIA.template[pageTemplates[i]].onCompletes.push(function(P){
-						app.u.dump("turn of cursor: "+P.templateID);
+//						app.u.dump("turn of cursor: "+P.templateID);
 						app.ext.myRIA.u.changeCursor('auto')
 						});
 					}

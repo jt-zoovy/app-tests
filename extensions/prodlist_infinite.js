@@ -148,7 +148,7 @@ It is run once, executed by the renderFormat.
 				}, //buildInfiniteProductList
 
 			addProductToPage : function($tag)	{
-				app.u.dump("BEGIN prodlist_infinite.u.addProductToPage");
+//				app.u.dump("BEGIN prodlist_infinite.u.addProductToPage");
 				$tag.data('isDispatching',true);
 				
 				var plObj = app.ext.store_prodlist.u.setProdlistVars($tag.data('bindData')),
@@ -219,7 +219,7 @@ It is run once, executed by the renderFormat.
 						}, 250);
 					}
 				else {
-					app.u.dump("-> prodlist_infinite FAILED TO INSERT PRODUCT: "+pid)
+//					app.u.dump("-> prodlist_infinite FAILED TO INSERT PRODUCT: "+pid);
 					tagTuple[1] = true;
 					}
 				},
@@ -236,7 +236,7 @@ It is run once, executed by the renderFormat.
 						}
 					}
 				if(renderedCount == prodTags.length){
-					app.u.dump("-> prodlist_infinite APPENDING "+prodTags.length+" ITEMS");
+//					app.u.dump("-> prodlist_infinite APPENDING "+prodTags.length+" ITEMS");
 					for(var i in prodTags){
 						if(prodTags[i][0]){
 							$container.append(prodTags[i][0]);

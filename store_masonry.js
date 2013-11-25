@@ -38,7 +38,7 @@ var store_masonry = function() {
 				//if there is any functionality required for this extension to load, put it here. such as a check for async google, the FB object, etc. return false if dependencies are not present. don't check for other extensions.
 				
 				app.rq.push(['templateFunction','categoryTemplate','onCompletes',function(infoObj) {
-					app.u.dump(" -> now do some masonry magic.");
+//					app.u.dump(" -> now do some masonry magic.");
 					var $context = $(app.u.jqSelector('#'+infoObj.parentID));
 					if(!$context.data('masonized')){
 						app.ext.store_masonry.u.masonImageInit($context);
@@ -46,21 +46,10 @@ var store_masonry = function() {
 						$context.data('masonized',true);
 						}
 					else {
-						setTimeout(function(){app.ext.store_masonry.u.reloadMasonry($context);},2000);
+						setTimeout(function(){app.ext.store_masonry.u.reloadMasonry($context);},500);
 						}
 					}]);				
-				app.rq.push(['templateFunction','searchTemplate','onCompletes',function(infoObj) {
-					app.u.dump(" -> now do some masonry magic.");
-					var $context = $(app.u.jqSelector('#'+infoObj.parentID));
-					if(!$context.data('masonized')){
-						app.ext.store_masonry.u.masonImageInit($context);
-						app.ext.store_masonry.u.runMasonry($context);
-						$context.data('masonized',true);
-						}
-					else {
-						setTimeout(function(){app.ext.store_masonry.u.reloadMasonry($context);},2000);
-						}
-					}]);
+
 					
 				r = true;
 
@@ -155,7 +144,7 @@ var store_masonry = function() {
 						}
 					});
 					//$target.data('masonry',masonry);
-				},2000);
+				},500);
 			}, //runMasonry
 			
 			//does what the name implies
@@ -176,12 +165,17 @@ var store_masonry = function() {
 			makeImageFromImgSrc : function($tag, attempts){
 				attempts = attempts || 0;
 				if($tag.attr('data-imgsrc')){
+//					app.u.dump(" -> $tag.closest('li').innerWidth(): "+$tag.closest("li").innerWidth());
+//					app.u.dump(" -> $tag.closest('.anyMasonry').innerHeight(): "+$tag.closest(".anyMasonry").innerHeight());
  					$tag.append(app.u.makeImage({
 						"name"	: $tag.data('imgsrc'),
-						"w"		: ($tag.closest(".anyMasonry").innerWidth() - 10), //use the parent element to get the image height and width. This works fine as long as the image SHOULD fill the entire element. if not, put a fixed height/width on the $tag and use that to generate the image dimensions.
-						"h"		: ($tag.closest(".anyMasonry").innerHeight() - 10),
+//use the parent element to get the image height and width. This works fine as long as the image SHOULD fill the entire element. if not, put a fixed height/width on the $tag and use that to generate the image dimensions.
+// -> using .anyMasonry caused inconsistent results. switching to li fixed this.
+						"w"		: ($tag.closest("li").innerWidth() - 10), 
+						"h"		: ($tag.closest("li").innerHeight() - 10),
 						"b"		: this.rgb2hex($tag.closest(".anyMasonry").css('backgroundColor')),
-						"tag"	: 1
+						"tag"	: 1,
+						"class" : "masonGeneratedImg"
 					}));
 				}
 				else if(attempts < 50){

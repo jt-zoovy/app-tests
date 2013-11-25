@@ -184,6 +184,7 @@ P.query = { 'and':{ 'filters':[ {'term':{'profile':'E31'}},{'term':{'tags':'IS_S
 						else	{
 							//no error gets thrown here. it is an acceptable use case to display search results w/ no multipage functionality.
 							}
+						app.u.dump(" --------> GOT HERE <----------");
 						app.ext.store_masonry.u.masonImageInit($parent);
 						app.ext.store_masonry.u.runMasonry($parent);
 						}
