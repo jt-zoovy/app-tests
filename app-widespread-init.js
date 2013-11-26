@@ -1,7 +1,6 @@
 var app = app || {vars:{},u:{}}; //make sure app exists.
 app.rq = app.rq || []; //ensure array is defined. rq = resource queue.
 
-console.log(" -> init is loaded");
 /*
 app.rq.push(['extension',0,'orderCreate','extensions/checkout/extension.js']);
 
@@ -220,13 +219,12 @@ app.u.appInitComplete = function(P)	{
 
 
 
-console.log(" -> app utilities have been added");
 //don't execute script till both jquery AND the dom are ready.
 $(document).ready(function(){
 	app.u.dump(" -> DOM and jQuery are both loaded. handle the RQ now");
-	$('.productSlideshow','#homepageTemplate').on('complete.woot',function(){
-		app.u.dump('woot!');
-		});
+//	$('.productSlideshow','#homepageTemplate').on('complete.woot',function(){
+//		app.u.dump('woot!');
+//		});
 	app.u.handleRQ(0)
 	});
 
