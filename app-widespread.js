@@ -62,10 +62,12 @@ var widespread = function() {
 			});
 		return false;
 		});
+
 	//.menu adds some formatting for the HTOW dropdown.
-	$('#hotwMenu').menu().width('200').on('click','a',function(){
+	$('#hotwMenu').menu().width('200').on('click','li',function(){
 		$('#hotwButton').addClass('ui-state-hover');
-		return showContent('',$(this).data());
+		showContent('',$(this).data());
+		//do not return false here. if so, the 'one' click added to the body won't get triggered by clicking a sotw.
 		});
 
 //each time the HOTW button is clicked, the dropdown is generated showing the last few pages viewed.
@@ -77,7 +79,7 @@ var widespread = function() {
 //start at spot 1. spot 0 is the page in focus.
 		for(var i = 1; i < 8; i += 1)	{
 			if(hotw[i])	{
-				$menu.append($("<li \/>").addClass('pointer').html($("<a \/>").attr({'href':'#'}).text(app.ext.widespread.u.formatInfoObj4HOTW(hotw[i])).data(hotw[i])));
+				$menu.append($("<li \/>").data(hotw[i]).addClass('pointer').text(app.ext.widespread.u.formatInfoObj4HOTW(hotw[i])));
 				}
 			else	{
 				break; //exit early once the end of hotw is reached.

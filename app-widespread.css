@@ -633,7 +633,7 @@ h2, h3, h4, h5, h6	{font-weight:normal;}
 //////////			HOMEPAGE			\\\\\\\\\\\
 */
 .bannerContainer	{position:relative; height:240px;}
-.bannerContainer .mainBanner	{display:none; position:absolute; z-index:10; top:0; left:0; height:240px; width:100%; background:#efefef; }
+.bannerContainer .mainBanner	{display:none; position:absolute; z-index:10; top:0; left:0; height:240px; width:100%;}
 .productSlideshowContainer	{ margin:0 auto; z-index:15; text-align:center; background:#ffffff;}
 .productSlideshowContainer .thumbContainer {text-align:center;}
 .slide	{width:100%; overflow:hidden; height:240px;}
