@@ -97,6 +97,17 @@ var prodlist_infinite = function() {
 				if(app.u.isSet(data.value))	{
 					data.bindData.csv = data.value;
 					$tag.data('bindData',data.bindData);
+					$tag.data('totalProductLoaded',0);
+					$tag.on('complete',function(){
+						app.u.dump(" -------------------------------");
+						var $prodlist = $(this);
+						app.ext.prodlist_infinite.u.handleScroll($prodlist);
+						$prodlist.data({'isDispatching':false,'pageProductLoaded':0});
+						if($prodlist.data('masonry')){
+							app.ext.store_masonry.u.masonImageInit($prodlist);
+							}
+						
+						});
 					app.ext.prodlist_infinite.u.buildInfiniteProductList($tag);
 					}
 				}//prodlist		
@@ -147,122 +158,52 @@ It is run once, executed by the renderFormat.
 //				app.u.dump(" -> r = "+r);
 				}, //buildInfiniteProductList
 
-			addProductToPage : function($tag)	{
-//				app.u.dump("BEGIN prodlist_infinite.u.addProductToPage");
-				$tag.data('isDispatching',true);
+			addProductToPage : function($prodlist)	{
+				app.u.dump("BEGIN prodlist_infinite.u.addProductToPage");
+				$prodlist.data({'isDispatching':true,'pageProductLoaded':0});
 				
-				var plObj = app.ext.store_prodlist.u.setProdlistVars($tag.data('bindData')),
+				var plObj = app.ext.store_prodlist.u.setProdlistVars($prodlist.data('bindData')),
 				numRequests = 0,
 				pageCSV = app.ext.store_prodlist.u.getSkusForThisPage(plObj), //gets a truncated list based on items per page.
 				L = pageCSV.length;
-				$tag.data('prodlist',plObj); //sets data object on parent
-
+				$prodlist.data('prodlist',plObj); //sets data object on parent
+//				app.u.dump(" -> plObj: "); app.u.dump(plObj);
 //Go get ALL the data and render it at the end. Less optimal from a 'we have it in memory already' point of view, but solves a plethora of other problems.
 				for(var i = 0; i < L; i += 1)	{
-					numRequests += app.calls.appProductGet.init({
-						"pid":pageCSV[i],
+					var
+						pid = pageCSV[i],
+						$product = app.renderFunctions.createTemplateInstance(plObj.loadsTemplate,{'data-pid':pid});
+
+					$prodlist.append($product);
+					//By here, the new product has been added to th DOM, though only as a placeholder.
+//					$prodlist.masonry('appended',$product);
+					if(plObj.withReviews)	{
+						numRequests += app.ext.store_prodlist.calls.appReviewsList.init(pid,{},'mutable');
+						}
+					//at this point, the product template has been added to the DOM.
+					app.calls.appProductGet.init({
+						"pid":pid,
 						"withVariations":plObj.withVariations,
 						"withInventory":plObj.withInventory
-						},{},'mutable');
-					if(plObj.withReviews)	{
-						numRequests += app.ext.store_prodlist.calls.appReviewsList.init(pageCSV[i],{},'mutable');
-						}
-					}
-				
-				var infiniteCallback = function(rd)	{
-					$tag.data('isDispatching',false); //toggle T/F as a dispatch occurs so that only 1 infinite scroll dispatch occurs at a time.
-					if(app.model.responseHasErrors(rd)){
-						$tag.parent().anymessage({'message':rd});
-						}
-					else	{
-						var prodTags = []
-						for(var i = 0; i < L; i += 1)	{
-// *** 201330 Uses $placeholders and the new insertProduct function to simulate aynchronous callback and preserve product order
-// while inserting products.  Before, if more appProductGet's were sent than could fit into a single pipeline, if the pipelined
-// request that held the "ping" with the infiniteCallback returned before another, the app.data["appProductGet|"...] would return 
-// undefined and the callback would fail mid-append. 
-							var tagTuple = [false,false];
-							prodTags.push(tagTuple);
-							app.ext.prodlist_infinite.u.insertProduct(pageCSV[i], plObj, tagTuple);
-							}
-						app.ext.prodlist_infinite.u.appendAllProducts($tag, prodTags);
-						}				
+						},{
+						'callback' : 'translateTemplate',
+						'extension' : 'store_prodlist',
+						'jqObj' : $product
+							},'mutable');
+
 					}
 
-				if(numRequests == 0)	{
-					infiniteCallback({})
-					}
-				else	{
-					app.calls.ping.init({'callback':infiniteCallback},'mutable');
-					app.model.dispatchThis();
-					}
-
-				},
-// *** 201330  The new insertProduct function re-attempts the append a reasonable number of times
-// before failing with a warning to the console.
-			insertProduct : function(pid, plObj, tagTuple, attempts){
-				var data = app.data['appProductGet|'+pid];
-				attempts = attempts || 0;
-				if(data){
-					if(typeof app.data['appReviewsList|'+pid] == 'object'  && app.data['appReviewsList|'+pid]['@reviews'].length)	{
-						data['reviews'] = app.ext.store_prodlist.u.summarizeReviews(pid); //generates a summary object (total, average)
-						data['reviews']['@reviews'] = app.data['appReviewsList|'+pid]['@reviews']
-						}
-														//if you want this list inventory aware, do you check here and skip the append below.
-					tagTuple[0] = app.renderFunctions.transmogrify({'pid':pid},plObj.loadsTemplate,data).get(0);
-					//app.u.dump(pid);
-					tagTuple[1] = true;
-//** 201346 -> This will handle the image resize, but just on this list item. That way the entire list (including items already rendered) aren't impacted.
-					app.ext.store_masonry.u.makeImageFromImgSrc($(".masonImage",$(tagTuple[0]).find("[data-imgsrc]")));
-					}
-				else if(attempts < 50){
-					setTimeout(function(){
-						app.ext.prodlist_infinite.u.insertProduct(pid, plObj, tagTuple, attempts+1);
-						}, 250);
-					}
-				else {
-//					app.u.dump("-> prodlist_infinite FAILED TO INSERT PRODUCT: "+pid);
-					tagTuple[1] = true;
-					}
-				},
-			
-			appendAllProducts : function($container, prodTags){
-				var allProdsRendered = false;
-				var renderedCount = 0;
-				for(var i in prodTags){
-					if(!prodTags[i][1]){
-						break;
-						}
-					else {
-						renderedCount++;
-						}
-					}
-				if(renderedCount == prodTags.length){
-//					app.u.dump("-> prodlist_infinite APPENDING "+prodTags.length+" ITEMS");
-					for(var i in prodTags){
-						if(prodTags[i][0]){
-							$container.append(prodTags[i][0]);
-							if($container.data('masonry')){
-								$container.masonry('appended',prodTags[i][0]);
-								}
-							}
-						}
-//** 201346 -> removed this line. It was causing duplicate images to get added.  see makeImageFromImgSrc function above.
-//					app.ext.store_masonry.u.masonImageInit($container);
-					app.ext.prodlist_infinite.u.handleScroll($container);
-					}
-				else{
-					app.u.dump("-> prodlist_infinite REQUEUEING APPEND");
-					setTimeout(function(){
-						app.ext.prodlist_infinite.u.appendAllProducts($container,prodTags);
-						},500);
-					}
 				},
 			
 			handleScroll : function($tag)	{
+//app.u.dump("BEGIN handleScroll");
 var plObj = $tag.data();
-if(plObj.prodlist.csv.length <= plObj.prodlist.items_per_page)	{$tag.parent().find("[data-app-role='infiniteProdlistLoadIndicator']").hide();} //do nothing. fewer than 1 page worth of items.
+if(plObj.prodlist.csv.length <= plObj.prodlist.items_per_page)	{
+//	app.u.dump(" -> only 1 page worth of data.");
+	$tag.parent().find("[data-app-role='infiniteProdlistLoadIndicator']").hide();
+	} //do nothing. fewer than 1 page worth of items.
 else if(plObj.prodlist.page_in_focus >= plObj.prodlist.total_page_count)	{
+//	app.u.dump(" -> reached the end of the road.");
 //reached the last 'page'. disable infinitescroll.
 	$(window).off('scroll.infiniteScroll');
 	$tag.parent().find("[data-app-role='infiniteProdlistLoadIndicator']").hide();
@@ -270,6 +211,7 @@ else if(plObj.prodlist.page_in_focus >= plObj.prodlist.total_page_count)	{
 else	{
 	$(window).on('scroll.infiniteScroll',function(){
 		//will load data when two rows from bottom.
+//		app.u.dump('scrolltop: '+$(window).scrollTop()+" page in focus: "+plObj.prodlist.page_in_focus+" / "+plObj.prodlist.total_page_count);
 		if( $(window).scrollTop() >= ( $(document).height() - $(window).height() - ($tag.children().first().height() * 2) ) )	{
 			if($tag.data('isDispatching') == true)	{}
 			else	{

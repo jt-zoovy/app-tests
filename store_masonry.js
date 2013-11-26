@@ -37,7 +37,7 @@ var store_masonry = function() {
 
 				//if there is any functionality required for this extension to load, put it here. such as a check for async google, the FB object, etc. return false if dependencies are not present. don't check for other extensions.
 				
-				app.rq.push(['templateFunction','categoryTemplate','onCompletes',function(infoObj) {
+/*				app.rq.push(['templateFunction','categoryTemplate','onCompletes',function(infoObj) {
 //					app.u.dump(" -> now do some masonry magic.");
 					var $context = $(app.u.jqSelector('#'+infoObj.parentID));
 					if(!$context.data('masonized')){
@@ -49,7 +49,7 @@ var store_masonry = function() {
 						setTimeout(function(){app.ext.store_masonry.u.reloadMasonry($context);},500);
 						}
 					}]);				
-
+*/
 					
 				r = true;
 

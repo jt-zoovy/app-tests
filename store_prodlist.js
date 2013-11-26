@@ -201,8 +201,11 @@ A special translate template for product so that reviews can be merged into the 
 				
 				$product.anycontent({'datapointer':tagObj.datapointer});
 				
-				$prodlist.data('numProductLoaded',($prodlist.data('numProductLoaded') + 1));
-				if(($prodlist.data('numProductLoaded') == $prodlist.data('prodlist').items_per_page) || ($prodlist.data('numProductLoaded') == $prodlist.data('prodlist').total_product_count))	{
+				$prodlist.data('pageProductLoaded',($prodlist.data('pageProductLoaded') + 1)); //tracks if page is done.
+				$prodlist.data('totalProductLoaded',($prodlist.data('totalProductLoaded') + 1)); //tracks if entire list is done. handy for last page which may have fewer than an entire pages worth of data.
+				
+				
+				if(($prodlist.data('pageProductLoaded') == $prodlist.data('prodlist').items_per_page) || ($prodlist.data('totalProductLoaded') == $prodlist.data('prodlist').total_product_count))	{
 //					app.u.dump($._data($prodlist[0],'events')); //how to see what events are tied to an element. not a supported method.
 					$prodlist.trigger('complete');
 					}
@@ -217,8 +220,8 @@ A special translate template for product so that reviews can be merged into the 
 				$product.anymessage(responseData,uuid);
 //even if the product errors out, productLoaded gets incremented so the oncomplete runs.
 				var $prodlist = $product.parent();
-				$prodlist.data('numProductLoaded',($prodlist.data('numProductLoaded') + 1));
-
+				$prodlist.data('pageProductLoaded',($prodlist.data('pageProductLoaded') + 1));
+				$prodlist.data('totalProductLoaded',($prodlist.data('totalProductLoaded') + 1));
 				
 //for UI prod finder. if admin session, adds a 'remove' button so merchant can easily take missing items from list.
 				if(app.vars.thisSessionIsAdmin)	{
@@ -564,7 +567,8 @@ params that are missing will be auto-generated.
 					if($tag)	{$tag.attr('id',plObj.parentID);}
 					else	{$tag = $('#'+plObj.parentID);}
 				
-					$tag.data('numProductLoaded',0); //used to count how many product have been loaded (for prodlistComplete)
+					$tag.data('pageProductLoaded',0); //used to count how many product have been loaded (for prodlistComplete)
+					$tag.data('totalProductLoaded',0); //used to count how many product have been loaded (for prodlistComplete)
 //a wrapper around all the prodlist content is created just one. Used in multipage to clear old multipage content. This allows for multiple multi-page prodlists on one page. Hey. it could happen.
 					if($('#'+plObj.parentID+'_container').length == 0)	{
 						if($tag.is('tbody'))	{

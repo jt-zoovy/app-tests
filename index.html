@@ -36,10 +36,10 @@ console.log("first script tag reached.");
 <!-- here to see how much this impacts app load time. -->
 <script src="app-widespread.js"></script>
 <script src="store_search.js"></script>
+<script src="store_prodlist.js"></script>
 <script src="store_masonry.js"></script>
 <script src="extensions/prodlist_infinite.js"></script>
 <script src="extensions/store_product.js"></script>
-<script src="extensions/store_prodlist.js"></script>
 <script src="extensions/store_navcats.js"></script>
 <script src="extensions/store_crm.js"></script>
 <script src="extensions/store_cart.js"></script>
@@ -60,10 +60,10 @@ var app = {vars:{
 	"extensions" : [
 		{"namespace":"widespread","filename":"app-widespread.js"},
 		{"namespace":"store_search","filename":"store_search.js"},
+		{"namespace":"store_prodlist","filename":"store_prodlist.js"},
 		{"namespace":"store_masonry","filename":"store_masonry.js"},
 		{"namespace":"prodlist_infinite","filename":"extensions/prodlist_infinite.js"},
 		{"namespace":"store_product","filename":"extensions/store_product.js"},
-		{"namespace":"store_prodlist","filename":"extensions/store_prodlist.js"},
 		{"namespace":"store_navcats","filename":"extensions/store_navcats.js"},
 		{"namespace":"store_crm","filename":"extensions/store_crm.js"},
 		{"namespace":"store_cart","filename":"extensions/store_cart.js"},
@@ -251,7 +251,7 @@ don't modify the 'data-templateid' unless you are changing template names and up
 
 	<ul data-bind="var: category(@subcategoryDetail); format: categoryList; extension: store_navcats; loadsTemplate: categoryListTemplate; detail:max;" class='listStyleNone fluidList clearfix noPadOrMargin categoryList marginBottom'></ul><!-- outputs a list of subcategories -->
 
-	<ul  data-bind="var: category(@products); format: infiniteProductList; extension:prodlist_infinite; loadsTemplate: productListTemplateMasonry; withReviews:1; items_per_page: 25;" class='listStyleNone clearfix noPadOrMargin masonList'></ul><!-- outputs the product list -->
+	<ul  data-bind="var: category(@products); format: infiniteProductList; extension:prodlist_infinite; loadsTemplate: productListTemplate; withReviews:1; items_per_page: 25;" class='listStyleNone responsiveProdlist clearfix noPadOrMargin'></ul><!-- outputs the product list -->
 
 	<p data-bind="var: category(%page.description); format:wiki; wikiFormats:myRIA; editor: textarea;"></p>
 

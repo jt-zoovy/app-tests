@@ -2859,7 +2859,7 @@ most likely, this will be expanded to support setting other data- attributes. ##
 				}
 				
 			if(templateID && app.templates[templateID])	{
-				app.u.dump(" -----> templateID: "+templateID);
+//				app.u.dump(" -----> templateID: "+templateID);
 				r = app.templates[templateID].clone(true,true);
 				if(typeof eleAttr == 'string')	{r.attr('id',app.u.makeSafeHTMLId(eleAttr))}
 				else if(typeof eleAttr == 'object')	{
