@@ -197,10 +197,7 @@ app.u.loadApp = function() {
 //will pass in the page info object. (pageType, templateID, pid/navcat/show and more)
 app.u.appInitComplete = function(P)	{
 	app.u.dump("Executing myAppIsLoaded code...");
-	
 
-	
-	
 	app.ext.myRIA.pageTransition = function($o,$n)	{
 		$('#hotwButton').show();
 //if $o doesn't exist, the animation doesn't run and the new element doesn't show up, so that needs to be accounted for.

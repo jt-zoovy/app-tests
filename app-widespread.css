@@ -604,14 +604,17 @@ h2, h3, h4, h5, h6	{font-weight:normal;}
 #mastHeadBC .breadcrumb li:last-child:after	{content:"";}
 #mastHeadBC .breadcrumb li:last-child a	{color:#666666; text-decoration:none; font-weight:bold; cursor:text;}
 
-#hotwButton	{position:absolute; top:.2em; right:.2em; padding:.2em; display:none;}
-#hotwMenu	{position:absolute; top:25px; right:.2em; z-index:900;}
-#hotwMenu li	{display:block;}
+#hotwButton	{position:absolute; top:.2em; right:.2em; padding:.3em; display:none;}
 
-#tier1categories	{width:240px; background:#efefef; color:#333; display:none; position:absolute; top:35px; left:1%; list-style:none; margin:0; padding:0; border:2px solid #9eca37; z-index:900;}
-#tier1categories li	{padding:.2em .3em; margin:0; border-bottom:1px dotted #cccccc;}
-#tier1categories li:hover	{background:#9eca37; color:#FF0;}
-#tier1categories .thumbContainer	{float:left; margin:0 0 .2em .2em;}
+/* applied to both the tier1categories and hotw menus */
+.mastHeadMenu	{width:240px; background:#efefef; color:#333; display:none; position:absolute; list-style:none; margin:0; padding:0; border:2px solid #9eca37; z-index:900;}
+.mastHeadMenu li	{padding:.2em .3em; margin:0; border-bottom:1px dotted #cccccc;}
+.mastHeadMenu li:hover	{background:#9eca37; color:#FF0;}
+.mastHeadMenu .thumbContainer	{float:left; margin:0 0 .2em .2em;}
+
+#tier1categories	{top:35px; left:1%;}
+#hotwMenu	{top:25px; right:.2em;}
+
 
 /*
 //////////			FOOTER			\\\\\\\\\\\

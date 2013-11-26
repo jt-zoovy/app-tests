@@ -44,7 +44,11 @@ var widespread = function() {
 		//resize the logo to maximum available space.
 		var $logo = $('.logo',$('#mastHead'));
 		var $container = $('.container:first'); //used to determine margin width so logo sides align with 'shop' sides.
-		$logo.html("<img src='http://ylh.zoovy.com/media/img/ylh/W"+Math.round(($logo.width() - ($container.width() * .02) ))+"-H"+$logo.height()+"-Bffffff/Y/yourlogohere_2013.png' />"); //the 100% makes the logo scale on resize before being regenerated.
+// app.data[rd.datapointer]['zoovy:company_name']
+		if(app.data['appProfileInfo|'+zGlobals.appSettings.domain_only])	{
+			$logo.html("<img alt='"+(app.data['appProfileInfo|'+zGlobals.appSettings.domain_only]['zoovy:company_name'] || "")+"' src='"+app.u.makeImage({"name":app.data['appProfileInfo|'+zGlobals.appSettings.domain_only]['zoovy:logo_website'],"w":Math.round(($logo.width() - ($container.width() * .02) )),"h":$logo.height(),"b":"TTTTTT","tag":0})+"' />"); //the 100% makes the logo scale on resize before being regenerated.
+			}
+		
 		if(typeof handleSrcSetUpdate == 'function')	{
 			handleSrcSetUpdate($("#mainContentArea :visible:first"))
 			}
@@ -59,8 +63,9 @@ var widespread = function() {
 		return false;
 		});
 	//.menu adds some formatting for the HTOW dropdown.
-	$('#hotwMenu').menu().width('200').on('click','li',function(){
-		showContent('',$(this).data());
+	$('#hotwMenu').menu().width('200').on('click','a',function(){
+		$('#hotwButton').addClass('ui-state-hover');
+		return showContent('',$(this).data());
 		});
 
 //each time the HOTW button is clicked, the dropdown is generated showing the last few pages viewed.
@@ -72,7 +77,7 @@ var widespread = function() {
 //start at spot 1. spot 0 is the page in focus.
 		for(var i = 1; i < 8; i += 1)	{
 			if(hotw[i])	{
-				$menu.append($("<li \/>").addClass('pointer').data(hotw[i]).html(app.ext.widespread.u.formatInfoObj4HOTW(hotw[i])));
+				$menu.append($("<li \/>").addClass('pointer').html($("<a \/>").attr({'href':'#'}).text(app.ext.widespread.u.formatInfoObj4HOTW(hotw[i])).data(hotw[i])));
 				}
 			else	{
 				break; //exit early once the end of hotw is reached.
@@ -80,6 +85,7 @@ var widespread = function() {
 			}
 		$('#hotwMenu').slideDown();
 		$(document.body).one('click',function(){
+			$('#hotwButton').removeClass('ui-state-hover');
 			$menu.slideUp();
 			});
 		return false;

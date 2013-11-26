@@ -96,7 +96,7 @@ app.u.loadScript(app.vars.baseURL+'app-widespread-init.js');
 <div class="container" id='appView'>
 	<section  id='mastHead'>
 		<div class='clearfix contrastUI'>
-			<div class='logo pointer' onClick="return showContent('homepage',{});"><img src="" alt="Insert Logo Here" width="100" height="90" /></div>
+			<div class='logo pointer' onClick="return showContent('homepage',{});"></div>
 			<div class='menuAndSearch'>
 				<ul class='mainMenu menuitems'>
 					<li class='menuItem2' onClick="return showContent('company',{'show':'contact'});">contact</li>
@@ -115,11 +115,11 @@ app.u.loadScript(app.vars.baseURL+'app-widespread-init.js');
 		</div>
 		<div class='clearfix' id='catsAndTitle'>
 			<div class='categoryContainer contrastUI' id='shopNowLink'>Shop</div><!-- hidden by default. on click, shows tier 1 categories -->
-			<ul id='tier1categories'>
+			<ul id='tier1categories' class='mastHeadMenu'>
 			</ul>
 			<div id='mastHeadBC'>
 				<button id='hotwButton'><span class='ui-icon-circle-arrow-w'></span></button>
-				<menu class='displayNone' id='hotwMenu'></menu>
+				<menu class='displayNone mastHeadMenu' id='hotwMenu'></menu>
 				<ul class='breadcrumb' data-bind='var: category(path); format:breadcrumb; extension:store_navcats; loadsTemplate: breadcrumbTemplate;'></ul>
 			</div>
 		</div>
