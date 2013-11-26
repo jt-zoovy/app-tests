@@ -24,24 +24,21 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.2/jquery-ui.min.js"></script>
 
-<script src="controller.js"></script>
-<script src="model.js"></script>
-
-
-
+<script src="controller.js?_v=201346.c"></script>
+<script src="model.js?_v=201346.c"></script>
 
 <!-- here to see how much this impacts app load time. -->
-<script src="app-widespread.js"></script>
-<script src="store_prodlist.js"></script>
+<script src="app-widespread.js?_v=201346.c"></script>
+<script src="store_prodlist.js?_v=201346.c"></script>
 <!-- <script src="store_masonry.js"></script> -->
-<script src="extensions/store_search.js"></script>
-<script src="extensions/prodlist_infinite.js"></script>
-<script src="extensions/store_product.js"></script>
-<script src="extensions/store_navcats.js"></script>
-<script src="extensions/store_crm.js"></script>
-<script src="extensions/store_cart.js"></script>
-<script src="extensions/cart_checkout_order.js"></script>
-<script src="extensions/checkout/extension.js"></script>
+<script src="extensions/store_search.js?_v=201346.c"></script>
+<script src="prodlist_infinite.js?_v=201346.c"></script>
+<script src="extensions/store_product.js?_v=201346.c"></script>
+<script src="extensions/store_navcats.js?_v=201346.c"></script>
+<script src="extensions/store_crm.js?_v=201346.c"></script>
+<script src="extensions/store_cart.js?_v=201346.c"></script>
+<script src="extensions/cart_checkout_order.js?_v=201346.c"></script>
+<script src="extensions/checkout/extension.js?_v=201346.c"></script>
 
 <script type="text/javascript">
 
@@ -59,7 +56,7 @@ var app = {vars:{
 		{"namespace":"store_prodlist","filename":"store_prodlist.js"},
 //		{"namespace":"store_masonry","filename":"store_masonry.js"},
 		{"namespace":"store_search","filename":"extensions/store_search.js"},
-		{"namespace":"prodlist_infinite","filename":"extensions/prodlist_infinite.js"},
+		{"namespace":"prodlist_infinite","filename":"prodlist_infinite.js"},
 		{"namespace":"store_product","filename":"extensions/store_product.js"},
 		{"namespace":"store_navcats","filename":"extensions/store_navcats.js"},
 		{"namespace":"store_crm","filename":"extensions/store_crm.js"},
@@ -97,7 +94,7 @@ app.u.loadScript(app.vars.baseURL+'app-widespread-init.js');
 			<div class='menuAndSearch'>
 				<ul class='mainMenu menuitems'>
 					<li class='menuItem2' onClick="return showContent('company',{'show':'contact'});">contact</li>
-					<li class='menuItem3 hideIfLoggedOut' onClick="return showContent('customer',{'show':'contact'});">you</li>
+					<li class='menuItem3 hideIfLoggedOut' onClick="return showContent('customer',{'show':'myaccount'});">you</li>
 					<li class='menuItem3 hideIfLoggedIn' onClick="return showContent('customer',{'show':'myaccount'});">login</li><!-- show if logged out -->
 					<li class='menuItem4' onClick="return showContent('cart',{'show':'cart'});">cart</li>
 					<li class='menuItem5' onClick="return showContent('checkout',{'show':'checkout'});">checkout</li>
@@ -143,7 +140,10 @@ app.u.loadScript(app.vars.baseURL+'app-widespread-init.js');
 
 </div>
 
-
+<div class='container clearfix footer'>
+	<span class='floatLeft'>Copyright &copy; All Rights Reserved.</span>
+	<span class='floatRight'>eCommerce by <a href='http://www.anycommerce.com' target='_blank'>anyCommerce</a></span>
+</div>
 
 
 
@@ -285,7 +285,7 @@ don't modify the 'data-templateid' unless you are changing template names and up
 </ul>
 
 
-<div class='slide' id='productListCycleTemplate' >
+<div class='slide pointer' id='productListCycleTemplate' onClick="showContent('product',{'pid':$(this).attr('data-pid')});">
 	<div class='thumbContainer' >
 	<img src='blank.gif' class='prodThumb' alt='' data-bind='var: product(zoovy:prod_image1); format:imageURL; format:srcset;extension:widespread; bgcolor:ffffff;range:homeCycle;' />
 	</div>
@@ -312,8 +312,8 @@ remember to NOT put the button inside the 'onclick' container or two events will
 		</div>
 
 		<h5 data-bind='var: product(zoovy:prod_name); format:text;'></h5>
-		<span data-bind='var: reviews(reviews.average); format:addClass; className:review_;' class='reviewSprite floatRight'></span>
 		<h6 data-bind='var: product(zoovy:base_price); format:money; currencySign: $;  hideZero:true; className:price; pretext: Our Price: ;'></h6>
+		<span data-bind='var: reviews(reviews.average); format:addClass; className:review_;' class='reviewSprite'></span>
 	</div>
 
 </li>
@@ -1007,8 +1007,8 @@ subscribeListsArticle is used for authenticated buyers
 <form action='#' id='changePasswordForm' name='changePasswordForm' onSubmit="app.ext.store_crm.u.handleChangePassword($(this),{'callback':'showMessaging','message':'Thank you, your password has been changed','jqObj':$(this).parent()}); return false">
 <fieldset class='borderNone'>
 <div class="messaging"></div>
-<div class='marginBottom'><label>Password<input type='password' name='password' size='35' /></label></div>
-<div class='marginBottom'><label>Confirm Password<input type='password' name='password2' size='35' /></label></div>
+<div class='marginBottom'><label>Password<input type='password' name='password' size='25' /></label></div>
+<div class='marginBottom'><label>Confirm Password<input type='password' name='password2' size='25' /></label></div>
 <div class='marginBottom'><input type='submit' value='Change Password' class='loadingButton ui-button-text ui-button ui-state-default ui-corner-all'></div>
 
 </fieldset>

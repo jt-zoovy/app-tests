@@ -159,7 +159,7 @@ It is run once, executed by the renderFormat.
 				}, //buildInfiniteProductList
 
 			addProductToPage : function($prodlist)	{
-				app.u.dump("BEGIN prodlist_infinite.u.addProductToPage");
+//				app.u.dump("BEGIN prodlist_infinite.u.addProductToPage");
 				$prodlist.data({'isDispatching':true,'pageProductLoaded':0});
 				
 				var plObj = app.ext.store_prodlist.u.setProdlistVars($prodlist.data('bindData')),
@@ -192,7 +192,7 @@ It is run once, executed by the renderFormat.
 							},'mutable');
 
 					}
-
+					app.model.dispatchThis('mutable');
 				},
 			
 			handleScroll : function($tag)	{
